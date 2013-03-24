@@ -57,7 +57,7 @@ auction_id int,
 category varchar2(10)
 );
 
-create table time(
+create table sys_time(
   my_time date
 );
 
