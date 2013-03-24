@@ -65,7 +65,7 @@ alter table customer add constraint pk_customer primary key(login) ;
 alter table administrator add constraint pk_administrator primary key(login) ;
 alter table product add constraint pk_product primary key(auction_id) ;
 alter table bidlog add constraint pk_bidlog primary key(bidsn) ;
-alter table category add constraint pk_category primary key(name, parent_category) ;
+alter table category add constraint pk_category primary key(name) ;
 alter table belongsto add constraint pk_belongsto primary key(auction_id, category) ;
 
 
@@ -156,15 +156,15 @@ insert into category values('Laptops', 'Computer Related');
 insert into category values('Monitors', 'Computer Related');
 insert into category values('Computer books', 'Computer Related');
 
-insert into category values(1, 'Computer Science');
-insert into category values(1, 'Computer books');
-insert into category values(2, 'Monitors');
-insert into category values(3, 'Laptops');
-insert into category values(4, 'Fiction books');
-insert into category values(5, 'Fiction books');
-insert into category values(6, 'Laptops');
-insert into category values(7, 'Computer Science');
-insert into category values(7, 'Computer books');
+insert into belongsto values(1, 'Computer Science');
+insert into belongsto values(1, 'Computer books');
+insert into belongsto values(2, 'Monitors');
+insert into belongsto values(3, 'Laptops');
+insert into belongsto values(4, 'Fiction books');
+insert into belongsto values(5, 'Fiction books');
+insert into belongsto values(6, 'Laptops');
+insert into belongsto values(7, 'Computer Science');
+insert into belongsto values(7, 'Computer books');
 
 insert into time values(SYSDATE);
 
