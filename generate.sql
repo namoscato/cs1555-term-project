@@ -65,7 +65,7 @@ alter table customer add constraint pk_customer primary key(login) ;
 alter table administrator add constraint pk_administrator primary key(login) ;
 alter table product add constraint pk_product primary key(auction_id) ;
 alter table bidlog add constraint pk_bidlog primary key(bidsn) ;
-alter table category add constraint pk_category primary key(name) ;
+alter table category add constraint pk_category primary key(name, parent_category) ;
 alter table belongsto add constraint pk_belongsto primary key(auction_id, category) ;
 
 
