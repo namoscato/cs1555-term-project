@@ -54,6 +54,10 @@ auction_id int,
 category varchar2(10)
 );
 
+create table time(
+  my_time date
+);
+
 alter table customer add constraint pk_customer primary key(login) ;
 alter table administrator add constraint pk_administrator primary key(login) ;
 alter table product add constraint pk_product primary key(auction_id) ;
