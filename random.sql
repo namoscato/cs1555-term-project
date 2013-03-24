@@ -19,3 +19,15 @@ select auction_id as "Auction ID", name as "Name", description as "Description"
 from product where status = 'underauction' and auction_id is in
 	(select auction_id from belongs to where category = *X*) 
 order by name desc ;
+
+
+--(b) Searching for product by text
+----Java stuff to check if they entered one or two keywords (X, Y)
+------If one keyword:
+select auction_id as "Auction ID", name as "Name", description as "Description"    
+from product where description like '%X%' ;
+------If two keywords:
+select auction_id as "Auction ID", name as "Name", description as "Description"    
+from product where description like '%X%Y%' or '%Y%X% ;
+
+
