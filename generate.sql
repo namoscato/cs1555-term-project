@@ -70,16 +70,13 @@ alter table category add constraint pk_category primary key(name) ;
 alter table belongsto add constraint pk_belongsto primary key(auction_id, category) ;
 
 
-alter table product add constraint fk_product1 foreign key(seller) references customer(login) INITIALLY DEFERRED DEFERRABLE;
-alter table product add constraint fk_product2 foreign key(buyer) references customer(login) INITIALLY DEFERRED DEFERRABLE;
-alter table bidlog add constraint fk_bidlog1 foreign key(auction_id) references product(auction_id) INITIALLY DEFERRED DEFERRABLE;
-alter table bidlog add constraint fk_bidlog2 foreign key(bidder) references customer(login) INITIALLY DEFERRED DEFERRABLE;
-alter table category add constraint fk_category foreign key(parent_category) references category(name) INITIALLY DEFERRED DEFERRABLE;
-alter table belongsto add constraint fk_belongsto1 foreign key(auction_id) references product(auction_id) INITIALLY DEFERRED DEFERRABLE ;
-alter table belongsto add constraint fk_belongsto2 foreign key(category) references category(name) INITIALLY DEFERRED DEFERRABLE;
-
-set constraints all deferred ;
-
+alter table product add constraint fk_product1 foreign key(seller) references customer(login) ;
+alter table product add constraint fk_product2 foreign key(buyer) references customer(login) ;
+alter table bidlog add constraint fk_bidlog1 foreign key(auction_id) references product(auction_id) ;
+alter table bidlog add constraint fk_bidlog2 foreign key(bidder) references customer(login) ;
+alter table category add constraint fk_category foreign key(parent_category) references category(name) ;
+alter table belongsto add constraint fk_belongsto1 foreign key(auction_id) references product(auction_id) ;
+alter table belongsto add constraint fk_belongsto2 foreign key(category) references category(name) ;
 
 create sequence seq1 start with 1 increment by 1 cache 100 ;
 create sequence seq2 start with 1 increment by 1 cache 100 ;
