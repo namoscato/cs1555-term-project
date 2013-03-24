@@ -162,6 +162,8 @@ insert into category values(5, 'Laptops');
 insert into category values(6, 'Computer Science');
 insert into category values(6, 'Computer books');
 
+insert into time values(SYSDATE);
+
 commit ;
 purge recyclebin ;
 
