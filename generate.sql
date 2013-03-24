@@ -1,4 +1,3 @@
-
 drop table customer cascade constraints ;
 drop table administrator cascade constraints ;
 drop table product cascade constraints ;
@@ -69,6 +68,48 @@ alter table bidlog add constraint fk_bidlog2 foreign key(bidder) references cust
 alter table category add constraint fk_category foreign key(parent_category) references category(name) ;
 alter table belongsto add constraint fk_belongsto1 foreign key(auction_id) references product(auction_id) ;
 alter table belongsto add constraint fk_belongsto2 foreign key(category) references category(name) ;
+
+
+create sequence seq1 start with 1 increment 1 cache 100 ;
+create sequence seq2 start with 1 increment 1 cache 100 ;
+create sequence seq3 start with 1 increment 1 cache 100 ;
+
+
+CREATE OR REPLACE TRIGGER product_trigger
+BEFORE INSERT ON product
+FOR EACH ROW
+
+BEGIN
+  SELECT seq1.NEXTVAL
+  INTO   :new.auction_id
+  FROM   dual;
+END;
+/
+
+CREATE OR REPLACE TRIGGER bidlog_trigger
+BEFORE INSERT ON bidlog
+FOR EACH ROW
+
+BEGIN
+  SELECT seq2.NEXTVAL
+  INTO   :new.auction_id
+  FROM   dual;
+END;
+/
+
+CREATE OR REPLACE TRIGGER belongsto_trigger
+BEFORE INSERT ON belongsto
+FOR EACH ROW
+
+BEGIN
+  SELECT seq3.NEXTVAL
+  INTO   :new.auction_id
+  FROM   dual;
+END;
+/
+
+
+
 
 insert into administrator values('admin', 'root', 'administrator', '6810 SENSQ', 'admin@1555.com') ;
 
