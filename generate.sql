@@ -73,9 +73,9 @@ alter table category add constraint fk_category foreign key(parent_category) ref
 alter table belongsto add constraint fk_belongsto1 foreign key(auction_id) references product(auction_id) ;
 alter table belongsto add constraint fk_belongsto2 foreign key(category) references category(name) ;
 
-create sequence seq1 start with 1 increment 1 cache 100 ;
-create sequence seq2 start with 1 increment 1 cache 100 ;
-create sequence seq3 start with 1 increment 1 cache 100 ;
+create sequence seq1 start with 1 increment by 1 cache 100 ;
+create sequence seq2 start with 1 increment by 1 cache 100 ;
+create sequence seq3 start with 1 increment by 1 cache 100 ;
 
 
 CREATE OR REPLACE TRIGGER product_trigger
