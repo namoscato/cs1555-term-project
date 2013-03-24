@@ -34,7 +34,7 @@ seller varchar2(10),
 start_date date,
 min_price int,
 number_of_days int,
-status varchar2(10) not null,
+status varchar2(20) not null,
 buyer varchar2(10),
 sell_date date,
 amount int
