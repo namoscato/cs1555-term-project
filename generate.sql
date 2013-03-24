@@ -4,6 +4,7 @@ drop table product cascade constraints ;
 drop table bidlog cascade constraints ;
 drop table category cascade constraints ;
 drop table belongsto cascade constraints ;
+drop table sys_time;
 
 drop sequence seq1;
 drop sequence seq2;
@@ -54,7 +55,7 @@ parent_category varchar2(20)
 
 create table belongsto(
 auction_id int,
-category varchar2(10)
+category varchar2(20)
 );
 
 create table sys_time(
