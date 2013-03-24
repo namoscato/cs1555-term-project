@@ -5,6 +5,10 @@ drop table bidlog cascade constraints ;
 drop table category cascade constraints ;
 drop table belongsto cascade constraints ;
 
+drop sequence seq1;
+drop sequence seq2;
+drop sequence seq3;
+
 create table customer(
 login varchar2(10),
 password varchar2(10),
