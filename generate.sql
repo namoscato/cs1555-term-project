@@ -167,7 +167,7 @@ insert into belongsto values(6, 'Laptops');
 insert into belongsto values(7, 'Computer Science');
 insert into belongsto values(7, 'Computer books');
 
-insert into time values(SYSDATE);
+insert into sys_time values(SYSDATE);
 
 commit ;
 purge recyclebin ;
