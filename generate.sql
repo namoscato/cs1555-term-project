@@ -1,4 +1,4 @@
---Comment
+--Test
 
 drop table customer cascade constraints ;
 drop table administrator cascade constraints ;
