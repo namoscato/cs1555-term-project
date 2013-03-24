@@ -116,6 +116,25 @@ BEGIN
 END;
 /
 
+--Trigger to advance system time by 5 seconds after a new bid is inserted
+CREATE OR REPLACE TRIGGER tri_bidTimeUpdate
+BEFORE INSERT ON product
+FOR EACH ROW
+BEGIN
+  update sys_time
+  set my_time = my_time + 5/86400 ;
+END;
+/
+
+--Trigger to update the amount attribute for a product after a bid is placed on it
+CREATE OR REPLACE TRIGGER tri_updateHighBid
+AFTER INSERT ON bidlog
+FOR EACH ROW
+BEGIN
+  update product
+  set amount = :new.amount where auction_id = :new.auction_id ;
+END;
+/
 
 
 insert into administrator values('admin', 'root', 'administrator', '6810 SENSQ', 'admin@1555.com') ;
@@ -143,6 +162,9 @@ insert into bidlog values(6, 2, 'user4', to_date('07-dec-2012/09:00:00am', 'dd-m
 insert into bidlog values(7, 4, 'user2', to_date('07-dec-2012/08:00:00am', 'dd-mm-yyyy/hh:mi:ssam'), 40);
 insert into bidlog values(8, 5, 'user3', to_date('09-dec-2012/08:00:00am', 'dd-mm-yyyy/hh:mi:ssam'), 40);
 insert into bidlog values(9, 7, 'user2', to_date('07-dec-2012/08:00:00am', 'dd-mm-yyyy/hh:mi:ssam'), 55);
+
+insert into bidlog values(10, 1, 'user2', to_date('07-dec-2012/08:00:00am', 'dd-mm-yyyy/hh:mi:ssam'), 100);
+
 
 insert into category values('Books', null);
 insert into category values('Textbooks', 'Books');
