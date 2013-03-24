@@ -136,6 +136,15 @@ BEGIN
 END;
 /
 
+--Trigger to check if an auction has expired and change its status to 'close'
+CREATE OR REPLACE TRIGGER closeAuctions
+AFTER INSERT ON product
+FOR EACH ROW
+BEGIN
+  update product
+  set status = 'close' where status = 'underauction' and sell_date > (select my_date from sys_date) ;
+END;
+/
 
 insert into administrator values('admin', 'root', 'administrator', '6810 SENSQ', 'admin@1555.com') ;
 
