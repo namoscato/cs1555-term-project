@@ -1,3 +1,5 @@
+--Comment
+
 drop table customer cascade constraints ;
 drop table administrator cascade constraints ;
 drop table product cascade constraints ;
