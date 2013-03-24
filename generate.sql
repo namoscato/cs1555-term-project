@@ -1,5 +1,3 @@
---Test
-
 drop table customer cascade constraints ;
 drop table administrator cascade constraints ;
 drop table product cascade constraints ;
@@ -68,7 +66,7 @@ alter table customer add constraint pk_customer primary key(login) ;
 alter table administrator add constraint pk_administrator primary key(login) ;
 alter table product add constraint pk_product primary key(auction_id) ;
 alter table bidlog add constraint pk_bidlog primary key(bidsn) ;
-alter table category add constraint pk_category primary key(name, parent_category) ;
+alter table category add constraint pk_category primary key(name) ;
 alter table belongsto add constraint pk_belongsto primary key(auction_id, category) ;
 
 
@@ -146,14 +144,14 @@ insert into bidlog values(7, 4, 'user2', to_date('07-dec-2012/08:00:00am', 'dd-m
 insert into bidlog values(8, 5, 'user3', to_date('09-dec-2012/08:00:00am', 'dd-mm-yyyy/hh:mi:ssam'), 40);
 insert into bidlog values(9, 7, 'user2', to_date('07-dec-2012/08:00:00am', 'dd-mm-yyyy/hh:mi:ssam'), 55);
 
-insert into category values('Books', '0');
+insert into category values('Books', null);
 insert into category values('Textbooks', 'Books');
 insert into category values('Fiction books', 'Books');
 insert into category values('Magazines', 'Books');
 insert into category values('Computer Science', 'Textbooks');
 insert into category values('Math', 'Textbooks');
 insert into category values('Philosophy', 'Textbooks');
-insert into category values('Computer Related', '0');
+insert into category values('Computer Related', null);
 insert into category values('Desktop PCs', 'Computer Related');
 insert into category values('Laptops', 'Computer Related');
 insert into category values('Monitors', 'Computer Related');
