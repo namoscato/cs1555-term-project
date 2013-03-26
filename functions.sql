@@ -43,9 +43,21 @@ DECLARE
   id int;
 BEGIN
   arr := vcarray('Math', 'Laptops');
-  put_product('test', 'testing', arr, 2, 'user0', 10, id);
+  --put_product('test', 'testing', arr, 2, 'user0', 10, id);
   dbms_output.put_line(id);
 END;
+/
+
+-- counts the number of products sold in the past x months for a specific category c
+-- not tested
+create or replace function product_count(months number, category varchar2)
+return number is
+  my_count number;
+begin
+  select count(p.auction_id) from product p join belongsto b on p.auction_id = b.auction_id
+  where b.category = category and p.sell_date >= add_months((select my_time from sys_time), -1 * months);
+  return my_count;
+end;
 /
 
 commit;

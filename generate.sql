@@ -142,7 +142,7 @@ AFTER INSERT ON product
 FOR EACH ROW
 BEGIN
   update product
-  set status = 'close' where status = 'underauction' and sell_date > (select my_date from sys_date) ;
+  set status = 'close' where status = 'underauction' and sell_date > (select my_time from sys_time) ;
 END;
 /
 
