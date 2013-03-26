@@ -13,7 +13,6 @@ create or replace procedure put_product (
 ) is
   i number;
   temp number;
-  new_id int;
   start_date date;
   invalid_cat exception;
 begin
@@ -31,7 +30,7 @@ begin
     i := categories.NEXT(i);
   end loop;
 
-  insert into product values(1, name, description, seller, start_date, min_price, days, 'underauction', null, null, null) returning auction_id into new_id;
+  insert into product values(1, name, description, seller, start_date, min_price, days, 'underauction', null, null, null) returning auction_id into id;
   return;
 exception
   when invalid_cat then raise_application_error(-20001, 'category is invalid');
@@ -45,6 +44,7 @@ DECLARE
 BEGIN
   arr := vcarray('Math', 'Laptops');
   put_product('test', 'testing', arr, 2, 'user0', 10, id);
+  dbms_output.put_line(id);
 END;
 /
 
