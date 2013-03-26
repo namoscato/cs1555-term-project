@@ -1,5 +1,4 @@
-
-create or replace type vcarray as varray(50) of varchar2(20);
+create or replace type vcarray as varray(20) of varchar2(20);
 /
 
 -- procedure inserts a product into the database
@@ -13,6 +12,7 @@ create or replace procedure put_product (
   id out int
 ) is
   i number;
+  temp number;
   new_id int;
   start_date date;
   invalid_cat exception;
@@ -24,7 +24,8 @@ begin
   i := categories.FIRST;
   loop
     exit when i is null;
-    if ((select count(name) from category where parent_category = categories(i)) = 0) 
+    select count(name) into temp from category where parent_category = categories(i);
+    if (temp > 0) 
       then raise invalid_cat;
     end if;
     i := categories.NEXT(i);
@@ -37,6 +38,15 @@ exception
 end;
 /
 
-commit;
+-- test procedure
+DECLARE
+  arr vcarray;
+  id int;
+BEGIN
+  arr := vcarray('Math', 'Laptops');
+  put_product('test', 'testing', arr, 2, 'user0', 10, id);
+END;
+/
 
--- execute put_product('test', 'testing', vcarray('Laptops', 'Math'), 2, 'user0', 10);
+commit;
+purge recyclebin;
