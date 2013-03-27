@@ -78,15 +78,14 @@ alter table category add constraint fk_category foreign key(parent_category) ref
 alter table belongsto add constraint fk_belongsto1 foreign key(auction_id) references product(auction_id) ;
 alter table belongsto add constraint fk_belongsto2 foreign key(category) references category(name) ;
 
-create sequence seq1 start with 1 increment by 1 cache 100 ;
-create sequence seq2 start with 1 increment by 1 cache 100 ;
-create sequence seq3 start with 1 increment by 1 cache 100 ;
+create sequence seq1 start with 1 increment by 1 nomaxvalue;
+create sequence seq2 start with 1 increment by 1 nomaxvalue;
+create sequence seq3 start with 1 increment by 1 nomaxvalue;
 
 
 CREATE OR REPLACE TRIGGER product_trigger
 BEFORE INSERT ON product
 FOR EACH ROW
-
 BEGIN
   SELECT seq1.NEXTVAL
   INTO   :new.auction_id
@@ -97,21 +96,9 @@ END;
 CREATE OR REPLACE TRIGGER bidlog_trigger
 BEFORE INSERT ON bidlog
 FOR EACH ROW
-
 BEGIN
   SELECT seq2.NEXTVAL
-  INTO   :new.auction_id
-  FROM   dual;
-END;
-/
-
-CREATE OR REPLACE TRIGGER belongsto_trigger
-BEFORE INSERT ON belongsto
-FOR EACH ROW
-
-BEGIN
-  SELECT seq3.NEXTVAL
-  INTO   :new.auction_id
+  INTO   :new.bidsn
   FROM   dual;
 END;
 /
@@ -136,15 +123,6 @@ BEGIN
 END;
 /
 
---Trigger to check if an auction has expired and change its status to 'close'
-CREATE OR REPLACE TRIGGER closeAuctions
-AFTER INSERT ON product
-FOR EACH ROW
-BEGIN
-  update product
-  set status = 'close' where status = 'underauction' and sell_date > (select my_time from sys_time) ;
-END;
-/
 
 insert into administrator values('admin', 'root', 'administrator', '6810 SENSQ', 'admin@1555.com') ;
 
@@ -171,9 +149,7 @@ insert into bidlog values(6, 2, 'user4', to_date('07-dec-2012/09:00:00am', 'dd-m
 insert into bidlog values(7, 4, 'user2', to_date('07-dec-2012/08:00:00am', 'dd-mm-yyyy/hh:mi:ssam'), 40);
 insert into bidlog values(8, 5, 'user3', to_date('09-dec-2012/08:00:00am', 'dd-mm-yyyy/hh:mi:ssam'), 40);
 insert into bidlog values(9, 7, 'user2', to_date('07-dec-2012/08:00:00am', 'dd-mm-yyyy/hh:mi:ssam'), 55);
-
 insert into bidlog values(10, 1, 'user2', to_date('07-dec-2012/08:00:00am', 'dd-mm-yyyy/hh:mi:ssam'), 100);
-
 
 insert into category values('Books', null);
 insert into category values('Textbooks', 'Books');
@@ -202,6 +178,3 @@ insert into sys_time values(SYSDATE);
 
 commit ;
 purge recyclebin ;
-
-
-
