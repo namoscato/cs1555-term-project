@@ -42,6 +42,31 @@ update product set status = "sold" where auction_id = X;
 update product set status = "withdrawn" where auction_id = X ;
 
 --(f) Suggestions
+-- If a customer X asks, the system can provide suggestions on which products he/she should look
+-- at. The system looks at the bidding history of customer X; then it determines the "bidding
+-- friends" of X, that is, those other customers who bid on the same products that X did; then,
+-- our system lists a union of the products that the "bidding friend" are currently bidding on. The
+-- products should be listed in decreasing "desirability" order: Desirability of a product is defined
+-- as the number of distinct "bidding friends" that have bid on this product.
+
+-- this should probably be a function or a view
+select auction_id from (
+  select friends.bidder, bids.auction_id from (
+    select distinct bidder
+    from bidlog
+    where auction_id in (
+        select distinct auction_id
+        from bidlog
+        where bidder = 'user2'
+    )
+  ) friends join bidlog bids on friends.bidder = bids.bidder
+  -- assuming we don't want to include products user has already bid on
+  where bids.auction_id not in (
+    select distinct auction_id
+    from bidlog
+    where bidder = 'user2'
+  )
+) group by auction_id order by count(bidder) desc;
 
 --2. Administrator Interface
 --(a) New Customer registration
