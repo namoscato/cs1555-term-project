@@ -143,6 +143,7 @@ insert into product values(4, 'Return of the King', 'fantasy', 'user1', to_date(
 insert into product values(5, 'The Sorcerer Stone', 'Harry Porter series', 'user1', to_date('08-dec-2012/12:00:00am', 'dd-mm-yyyy/hh:mi:ssam'), 40, 2, 'sold', 'user3', to_date('10-dec-2012/12:00:00am', 'dd-mm-yyyy/hh:mi:ssam'), 40, 0);
 insert into product values(6, 'DELL INSPIRON 1100', 'DELL INSPIRON notebook', 'user1', to_date('09-dec-2012/12:00:00am', 'dd-mm-yyyy/hh:mi:ssam'), 200, 1, 'withdrawn', null, null, null, 0);
 insert into product values(7, 'Advanced Database', 'SQL Transaction index', 'user1', to_date('10-dec-2012/12:00:00am', 'dd-mm-yyyy/hh:mi:ssam'), 50, 2, 'underauction', null, null, null, 0);
+insert into product values(8, 'Another Database', 'SQL ER-design', 'user1', to_date('04-nov-2012/12:00:00am', 'dd-mm-yyyy/hh:mi:ssam'), 50, 2, 'sold', 'user2', to_date('06-nov-2012/12:00:00am', 'dd-mm-yyyy/hh:mi:ssam'), 53, 0);
 
 insert into bidlog values(1, 1, 'user2', to_date('04-dec-2012/08:00:00am', 'dd-mm-yyyy/hh:mi:ssam'), 50);
 insert into bidlog values(2, 1, 'user3', to_date('04-dec-2012/09:00:00am', 'dd-mm-yyyy/hh:mi:ssam'), 53);
@@ -177,6 +178,7 @@ insert into belongsto values(5, 'Fiction books');
 insert into belongsto values(6, 'Laptops');
 insert into belongsto values(7, 'Computer Science');
 insert into belongsto values(7, 'Computer books');
+insert into belongsto values(8, 'Computer books');
 
 insert into sys_time values(SYSDATE);
 
