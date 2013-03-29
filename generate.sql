@@ -8,7 +8,6 @@ drop table sys_time cascade constraints ;
 
 drop sequence seq1;
 drop sequence seq2;
-drop sequence seq3;
 
 create table customer(
 login varchar2(10),
@@ -81,7 +80,6 @@ alter table belongsto add constraint fk_belongsto2 foreign key(category) referen
 
 create sequence seq1 start with 1 increment by 1 nomaxvalue;
 create sequence seq2 start with 1 increment by 1 nomaxvalue;
-create sequence seq3 start with 1 increment by 1 nomaxvalue;
 
 
 CREATE OR REPLACE TRIGGER product_trigger
@@ -126,6 +124,17 @@ BEGIN
   set amount2 = :old.amount where auction_id = :new.auction_id ;
 END;
 /
+
+--Trigger to check if an auction has expired and change its status to 'close'
+CREATE OR REPLACE TRIGGER closeAuctions
+AFTER UPDATE ON sys_time
+BEGIN
+  update product
+  set status = 'close'
+  where status = 'underauction' and (start_date + number_of_days) < (select my_time from sys_time);
+END;
+/
+-- update sys_time set my_time = to_date('12-dec-2012/09:00:00pm', 'dd-mm-yyyy/hh:mi:ssam');
 
 
 insert into administrator values('admin', 'root', 'administrator', '6810 SENSQ', 'admin@1555.com') ;
@@ -180,7 +189,7 @@ insert into belongsto values(7, 'Computer Science');
 insert into belongsto values(7, 'Computer books');
 insert into belongsto values(8, 'Computer books');
 
-insert into sys_time values(SYSDATE);
+insert into sys_time values(to_date('01-dec-2011/09:00:00am', 'dd-mm-yyyy/hh:mi:ssam'));
 
 commit ;
 purge recyclebin ;
