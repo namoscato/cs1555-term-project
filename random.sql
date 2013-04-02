@@ -50,6 +50,7 @@ update product set status = "withdrawn" where auction_id = 1;
 -- as the number of distinct "bidding friends" that have bid on this product.
 
 -- this should probably be a function or a view
+-- find suggestions for 'user2'
 select auction_id from (
   select friends.bidder, bids.auction_id from (
     select distinct bidder
@@ -59,13 +60,13 @@ select auction_id from (
         from bidlog
         where bidder = 'user2'
     )
-  ) friends join bidlog bids on friends.bidder = bids.bidder
+  ) friends join bidlog bids on friends.bidder = bids.bidder join product p on bids.auction_id = p.auction_id
   -- assuming we don't want to include products user has already bid on
   where bids.auction_id not in (
     select distinct auction_id
     from bidlog
     where bidder = 'user2'
-  )
+  ) and p.status = 'underauction'
 ) group by auction_id order by count(bidder) desc;
 
 --2. Administrator Interface
