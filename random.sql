@@ -1,24 +1,29 @@
 --Queries that use the java interface to fetch data from user
 
 
---1. Customer Interface
---(a) Browsing products
-----Java: Assuming 'books' was the category given
-select auction_id as "Auction ID", name as "Name", description as "Description"    
-from product where status = 'underauction' and auction_id in
-	(select auction_id from belongsto where category = 'books') ;
-----Prompt user if they want to sort by highest bid (a), alphabetically by product name(b), or exit:
---------a:
-select auction_id as "Auction ID", name as "Name", 
-description as "Description", amount as "Highest Bid"  
-from product where status = 'underauction' and auction_id in
-	(select auction_id from belongsto where category = 'books') 
-order by amount desc ;
---------b:
-select auction_id as "Auction ID", name as "Name", description as "Description"    
-from product where status = 'underauction' and auction_id is in
-	(select auction_id from belongsto where category = 'books') 
-order by name desc ;
+-- ### 1. Customer Interface
+
+-- (a) Browsing products
+-- Java: Assuming 'Books' was the category given
+
+select * from product
+where status = 'underauction' and auction_id in (
+  select auction_id from belongsto where category = 'Books'
+);
+
+-- sort by highest bid
+select * from product
+where status = 'underauction' and auction_id in (
+  select auction_id from belongsto where category = 'Books'
+) order by amount desc;
+
+-- sort alphabetically by product name
+select * from product
+where status = 'underauction' and auction_id in (
+  select auction_id from belongsto where category = 'Computer books'
+) order by name asc;
+
+-- do we need to provide SQL to list root/sub-categories?
 
 
 --(b) Searching for product by text
