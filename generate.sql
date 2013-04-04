@@ -293,8 +293,44 @@ BEGIN
 END;
 /
 
--- *** check the validity of the new bid
--- *** record in the database the new bid
+-- check the validity of the new bid (surrounded by transaction?)
+-- might be able to return a boolean to use w/ java
+create or replace function validate_bid(id int, bid int)
+return int is
+  invalid exception;
+  amount int;
+  status varchar2(20);
+begin
+  select amount into amount
+  from product
+  where auction_id = id;
+
+  if bid <= amount then
+    raise invalid;
+  end if;
+
+  select status into status
+  from product
+  where auction_id = id;
+
+  -- sanity check
+  if status <> 'underauction' then
+    raise invalid;
+  end if;
+
+  return 1;
+exception
+  when invalid then
+    return 0;
+  when others then
+    return 0;
+end;
+/
+-- select validate_bid(7,55) from dual;
+
+-- if validate_bid():
+-- record in the database the new bid where <amount> is an amount
+insert into bidlog values(1, 1, 'username', (select my_time from sys_time), <amount>);
 
 
 -- (e) Selling products
