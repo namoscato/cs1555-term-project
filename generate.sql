@@ -1,3 +1,7 @@
+--CS1555 Term Project
+--Nicholas Amoscato -- naa46@pitt.edu
+--Ryan Sandhaus -- rjs90@pitt.edu
+
 -- ### 1. Create the tables and insert necessary data
 
 drop table customer cascade constraints ;
@@ -40,7 +44,7 @@ status varchar2(20) not null,
 buyer varchar2(10),
 sell_date date,
 amount int,
-amount2 int default 0
+amount2 int default 0 --extra value added to keep track of 2nd highest bid
 );
 
 create table bidlog(
@@ -295,6 +299,11 @@ END;
 
 -- check the validity of the new bid (surrounded by transaction?)
 -- might be able to return a boolean to use w/ java
+
+-- This transaction groups together to calling of this function with the insert
+--	into bidlog so that the two will be serializable as they are run.
+set transaction isolation level serializable name 'bid' ;
+
 create or replace function validate_bid(id int, bid int)
 return int is
   invalid exception;
@@ -331,6 +340,10 @@ end;
 -- if validate_bid():
 -- record in the database the new bid where <amount> is an amount
 insert into bidlog values(1, 1, 'username', (select my_time from sys_time), <amount>);
+commit ; --ending the transaction
+
+
+
 
 
 -- (e) Selling products
