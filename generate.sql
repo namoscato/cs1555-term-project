@@ -300,10 +300,6 @@ END;
 -- check the validity of the new bid (surrounded by transaction?)
 -- might be able to return a boolean to use w/ java
 
--- This transaction groups together to calling of this function with the insert
---	into bidlog so that the two will be serializable as they are run.
-set transaction isolation level serializable name 'bid' ;
-
 create or replace function validate_bid(id int, bid int)
 return int is
   invalid exception;
@@ -340,7 +336,6 @@ end;
 -- if validate_bid():
 -- record in the database the new bid where <amount> is an amount
 insert into bidlog values(1, 1, 'username', (select my_time from sys_time), <amount>);
-commit ; --ending the transaction
 
 /*
 This procudure is going to be used in the Java implementation. Currently we have our
