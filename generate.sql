@@ -342,7 +342,22 @@ end;
 insert into bidlog values(1, 1, 'username', (select my_time from sys_time), <amount>);
 commit ; --ending the transaction
 
+/*
+This procudure is going to be used in the Java implementation. Currently we have our
+concurrency-checking transaction surround the creation of the function as well as the
+insert, which is unnecessary. This will be changed with the following procudure:
 
+create or replace procedure make_bid()
+begin
+set transaction isolation level serializable name 'bid' ;
+if select validate_bid(<id>, <amount>) from amount != 0
+then
+insert into bidlog values(1, 1, 'username', (select my_time from sys_time), <amount>);
+end if ;
+commit ;
+end ;
+/
+*/
 
 
 
