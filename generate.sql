@@ -391,7 +391,13 @@ insert into customer values('TestUser', 'Password', 'Joe Smith', '123 Fake Str',
 update sys_time set my_time = to_date('12-dec-2012/09:00:00pm', 'dd-mm-yyyy/hh:mi:ssam');
 
 
--- *** (c) Product statistics
+-- (c) Product statistics
+
+---- (1) for all  products
+select name, status, amount, buyer from product;
+
+---- (2) if login name is provided
+select name, status, amount, buyer from product where seller = 'user0';
 
 
 -- (d) Statistics
