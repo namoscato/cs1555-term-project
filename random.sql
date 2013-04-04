@@ -20,7 +20,7 @@ where status = 'underauction' and auction_id in (
 -- sort alphabetically by product name
 select * from product
 where status = 'underauction' and auction_id in (
-  select auction_id from belongsto where category = 'Computer books'
+  select auction_id from belongsto where category = 'Books'
 ) order by name asc;
 
 -- do we need to provide SQL to list root/sub-categories?
