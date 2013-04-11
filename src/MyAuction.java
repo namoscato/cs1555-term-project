@@ -1,6 +1,8 @@
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.sql.*;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Scanner;
 
 public class MyAuction {
@@ -9,7 +11,69 @@ public class MyAuction {
 	private ResultSet resultSet; //used to hold the result of your query (if one // exists)
 	private String query;  //this will hold the query we are using
 	private String username, password;
-
+	
+	private static final String HR = "--------------------------------------";
+	
+	/*
+	 * Prints menu and prompts user input
+	 * @param menu 0:main, 1:admin, 2:user
+	 */
+	public void promptMenu(int menu) {
+		System.out.println();
+		// print choices
+		List<String> choices = null;
+		switch(menu) {
+			case 2:
+				System.out.println("Administrator Menu\n" + HR);
+				choices = Arrays.asList(
+					"New customer registration",
+					"Update system date",
+					"Etc"
+				);
+				break;
+			case 1:
+				System.out.println("User Menu\n" + HR);
+				choices = Arrays.asList(
+					"Browse products",
+					"Search products",
+					"Etc"
+				);
+				break;
+			default:
+				System.out.println("Main Menu\n" + HR);
+				choices = Arrays.asList(
+					"Administrator login",
+					"User login"
+				);
+				break;
+		}
+		for (int i = 1; i <= choices.size(); i++) {
+			System.out.println("  " + i + ") " + choices.get(i - 1));
+		}
+		System.out.println(HR);
+		
+		// prompt for user input
+		Scanner in = new Scanner(System.in);
+		boolean valid = false;
+		do {
+			System.out.print("Choose a menu item: ");
+			int choice = in.nextInt();
+			
+			// if input is valid, execute task
+			if (choice > 0 && choice <= choices.size()) {
+				System.out.println("\n" + choices.get(choice - 1));
+				if (menu == 2) {
+					// admin menu
+				} else if (menu == 1) {
+					// user menu
+				} else {
+					// main menu
+				}
+				valid = true;
+			}
+		} while(!valid);
+	}
+	
 	public MyAuction() {
 		try {
 			// get username and password
@@ -21,7 +85,10 @@ public class MyAuction {
 			try {
 				// register oracle driver and connect to db  
 				DriverManager.registerDriver (new oracle.jdbc.driver.OracleDriver());
-				connection = DriverManager.getConnection("jdbc:oracle:thin:@db10.cs.pitt.edu:1521:dbclass", username, password); 
+				connection = DriverManager.getConnection("jdbc:oracle:thin:@db10.cs.pitt.edu:1521:dbclass", username, password);
+				
+				System.out.println("Welcome to MyAuction!");
+				promptMenu(0);
 			}
 			catch(Exception e)  {
 				System.err.println("Error connecting to database: " + e.toString());
