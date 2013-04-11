@@ -28,7 +28,7 @@ public class MyAuction {
 				choices = Arrays.asList(
 					"New customer registration",
 					"Update system date",
-					"Etc"
+					"Statistics"
 				);
 				break;
 			case 1:
@@ -36,7 +36,10 @@ public class MyAuction {
 				choices = Arrays.asList(
 					"Browse products",
 					"Search products",
-					"Etc"
+					"Auction product",
+					"Bid on product",
+					"Sell product",
+					"Show suggestions"
 				);
 				break;
 			default:
@@ -71,13 +74,13 @@ public class MyAuction {
 					switch(choice) {
 						case 1:
 							if(login(1))
-								promptMenu(1);
+								promptMenu(2);
 							else
 								System.out.println("Error! Invalid username/password!") ;
 							break;
 						case 2:	
 							if(login(2))
-								promptMenu(2);
+								promptMenu(1);
 							else
 								System.out.println("Error! Invalid username/password!") ;
 							break;
@@ -127,6 +130,79 @@ public class MyAuction {
 		return false ; //This should really never happen. I'm just making java happy
 	}
 	
+	public void browse()
+	{
+		try{
+	
+		Scanner scanner = new Scanner(System.in) ;
+		System.out.println("What category do you want to searh in?") ;
+		String input = scanner.nextLine() ;
+		
+		statement = connection.createStatement() ;
+		//Need some way of listing the categories to get more specific.
+		//Any idea for the best way to do this?
+		
+		System.out.println("How do you want your products sorted by? (enter the corresponding number)\n"
+		+ "1. Highest Bid First\n2.Lowest Bid First\n3. Alphabetically by product name") ;
+		int sort = scanner.nextInt() ;
+		if(sort == 1)
+			query = "" ; //Will be added after categories
+		else if(sort == 2)
+			query = "" ;
+		else if(sort == 3)
+			query = "" ;
+		else
+			System.out.println("Error: You did not enter 1, 2, or 3.") ;
+		
+		//Once the category thing is sorted out, I can easily add the queries and then
+		//add a few lines to display the output.
+		
+		}
+		catch(Exception Ex) {
+	    System.out.println("Error running the sample queries.  Machine Error: " +
+			       Ex.toString());
+		}
+	}
+	
+	public void search()
+	{
+		try{
+	
+		Scanner scanner = new Scanner(System.in) ;
+		System.out.println("Please enter the first keyword you would like to search by: ") ;
+		String input = scanner.nextLine() ;
+		System.out.println("Enter the second keyword you would like to search by, or leave "
+		+ "this field blank if you only want to use one keyword: " ) ;
+		String input2 = scanner.nextLine() ;
+		
+		PreparedStatement updateStatement ;
+		if(input2.equals(""))
+		{
+			query = "select auction_id, name, description from product where upper(description) like upper('%?%')" ;
+			updateStatement = connection.prepareStatement(query) ;
+			updateStatement.setString(1, input) ;
+		}
+		else
+		{
+			query = "select auction_id, name, description from product where upper(description) like upper('%?%') and upper(description) like upper('%?%')" ;
+			updateStatement = connection.prepareStatement(query) ;
+			updateStatement.setString(1, input) ;
+			updateStatement.setString(2, input2) ;
+		}
+		resultSet = updateStatement.executeQuery(query) ;
+		System.out.println("\nSearch Results: ") ;
+		while(resultSet.next())
+		{
+			System.out.println("Auction ID: " + resultSet.getInt(1) + ", Product: " + resultSet.getString(2)
+					+ ", Description: " + resultSet.getString(3)) ;
+		}
+	
+		} //end try
+		catch(Exception Ex) {
+	    System.out.println("Error running the sample queries.  Machine Error: " +
+			       Ex.toString());
+		}
+	}
 	
 	public MyAuction() {
 		try {
