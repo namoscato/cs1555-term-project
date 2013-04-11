@@ -63,11 +63,21 @@ public class MyAuction {
 			if (choice > 0 && choice <= choices.size()) {
 				System.out.println("\n" + choices.get(choice - 1));
 				if (menu == 2) {
-					// admin menu
+					// deal with admin menu choices
 				} else if (menu == 1) {
-					// user menu
+					// deal with user menu choices
 				} else {
-					// main menu
+					// deal with main menu choices
+					switch(choice) {
+						case 1:
+							promptMenu(1);
+							break;
+						case 2:
+							promptMenu(2);
+							break;
+						default:
+							break;
+					}
 				}
 				valid = true;
 			}
@@ -77,13 +87,14 @@ public class MyAuction {
 	public MyAuction() {
 		try {
 			// get username and password
-			Scanner scanner = new Scanner(new File("../db.config"));
+			Scanner scanner = new Scanner(new File("db.config"));
 			username = scanner.nextLine();
 			password = scanner.nextLine();
 			scanner.close();
 			
 			try {
-				// register oracle driver and connect to db  
+				// register oracle driver and connect to db
+				// must be on unixs.cis.pitt.edu and run "source ~panos/1555/bash.env"
 				DriverManager.registerDriver (new oracle.jdbc.driver.OracleDriver());
 				connection = DriverManager.getConnection("jdbc:oracle:thin:@db10.cs.pitt.edu:1521:dbclass", username, password);
 				
