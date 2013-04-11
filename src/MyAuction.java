@@ -70,10 +70,16 @@ public class MyAuction {
 					// deal with main menu choices
 					switch(choice) {
 						case 1:
-							promptMenu(1);
+							if(login(1))
+								promptMenu(1);
+							else
+								System.out.println("Error! Invalid username/password!") ;
 							break;
-						case 2:
-							promptMenu(2);
+						case 2:	
+							if(login(2))
+								promptMenu(2);
+							else
+								System.out.println("Error! Invalid username/password!") ;
 							break;
 						default:
 							break;
@@ -83,6 +89,44 @@ public class MyAuction {
 			}
 		} while(!valid);
 	}
+	
+	public boolean login(int type) //Basic login function
+	{
+		try{
+	
+		if(type != 1 && type != 2)
+			System.out.println("You should never ever see this output.") ;
+	
+		Scanner scan = new Scanner(System.in) ;
+		String username = null ;
+		String password = null ;
+		System.out.println("\nPlease enter your login information.\nUsername: ") ;
+		username = scan.nextLine() ;
+		System.out.println("Password: ") ;
+		password = scan.nextLine() ;
+		
+		//checking to make sure the usn/pwd match something in the database
+		statement = connection.createStatement() ;
+		if(type == 2) //Which database to check for the login info
+			query = "select login, password from customer" ;
+		else
+			query = "select login, password from administrator" ;
+		resultSet = statement.executeQuery(query) ;
+		while(resultSet.next())
+		{
+			if(username.equals(resultSet.getString(1)) && password.equals(resultSet.getString(2)))
+				return true ; //Username/password combo was found!
+		}
+		return false ; //If there was no match for the username/password, return false
+		
+		}
+		catch(Exception Ex) {
+	    System.out.println("Error running the sample queries.  Machine Error: " +
+			       Ex.toString());
+		}
+		return false ; //This should really never happen. I'm just making java happy
+	}
+	
 	
 	public MyAuction() {
 		try {
