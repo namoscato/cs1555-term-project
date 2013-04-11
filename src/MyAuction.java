@@ -16,7 +16,7 @@ public class MyAuction {
 	
 	/*
 	 * Prints menu and prompts user input
-	 * @param menu 0:main, 1:admin, 2:user
+	 * @param menu 0:main, 1:user, 2:admin
 	 */
 	public void promptMenu(int menu) {
 		System.out.println();
