@@ -88,7 +88,7 @@ public class MyAuction {
 	 * Prints menu and prompts user input
 	 * @param menu 0:main, 1:user, 2:admin
 	 */
-	public void promptMenu(int menu) {
+	public void promptMenu(int menu) throws SQLException {
 		System.out.println();
 		// print choices
 		List<String> choices = null;
@@ -132,6 +132,7 @@ public class MyAuction {
 			switch(choice) {
 				case 1:
 					// New customer registration
+					registerCustomer() ;
 					break;
 				case 2:
 					// Update system date
@@ -288,6 +289,56 @@ public class MyAuction {
 		}
 	}
 	
+	//Work in progress -- currently one error and it's done
+	public void registerCustomer() throws SQLException {
+		String name, address, email, login, password, admin ;
+		name = getUserInput("\nPlease provide the following information for the new user: \nName:") ;
+		address = getUserInput("Address:") ;
+		email = getUserInput("Email Address:") ;
+		login = getUserInput("Username:") ;
+		password = getUserInput("Password:") ;
+		admin = getUserInput("Is this user an admin? (yes/no):") ;
+		
+		//Checking to see if there is already a registered user with that login name
+		boolean success = true ;
+		int exists = 0 ;
+		ResultSet resultSet = null ;
+		resultSet = query("select count(login) from customer where login = '" + login + "'") ;
+		while(resultSet.next()) { //**Error right here -- Not sure why : /
+			exists = resultSet.getInt(1) ; 
+		}
+		
+		if(exists != 0) { 
+			System.out.println("\nSorry, an account with that username already exists.") ;
+			success = false ;
+		}
+		else if(admin.equals("yes") || admin.equals("Yes"))
+			resultSet = query("insert into administrator values ('" + login + "', '" + password + "', '" + name + "', '" + address + "', '" + email + "')") ;
+		else
+			resultSet = query("insert into administrator values ('" + login + "', '" + password + "', '" + name + "', '" + address + "', '" + email + "')") ;
+
+		if(success)
+			System.out.println("\nNew user successfully added!") ;
+		
+		promptMenu(2);
+	}
+	
+	//not yet tested due to error in registerCustomer
+	//should be working fine though. Not much I could have messed up
+	public void updateDate() {
+		String date ;
+		date = getUserInput("\nWhat do you want to set the date to? Please follow this format:\ndd-mm-yyyy/hh:mi:ssam\n") ;
+	
+		ResultSet resultSet ;
+		resultSet = query("update sys_time set my_time = to_date('" + date + "', 'dd-mm-yyyy/hh:mi:ssam'") ;
+		if(resultSet == null)
+			System.out.println("Error: please enter the date in the correct format.") ;
+		else
+			System.out.println("Update successful!") ;
+		
+		promptMenu(2);
+	}
+	
 	/*
 	 * Browse through products of a specific category
 	 */
@@ -312,50 +363,54 @@ public class MyAuction {
 				"Lowest bid first",
 				"Alphabetically by product name"
 			), "Choose a sort option");
-			
-			/*
-			if(sort == 1)
-				query = "" ; //Will be added after categories
-			else if(sort == 2)
-				query = "" ;
-			else if(sort == 3)
-				query = "" ;
-			*/
 
-			//Once the category thing is sorted out, I can easily add the queries and then
-			//add a few lines to display the output.
+			ResultSet resultSet = null ;
+			if(sort == 1)
+				resultSet = query("select auction_id, name, description, amount from product where status = 'underauction' and auction_id in (select auction_id from belongsto where category = '" + chosenCat + "') order by amount desc") ;
+			else if(sort == 2)
+				resultSet = query("select auction_id, name, description, amount from product where status = 'underauction' and auction_id in (select auction_id from belongsto where category = '" + chosenCat + "') order by amount asc") ;
+			else if(sort == 3)
+				resultSet = query("select auction_id, name, description, amount from product where status = 'underauction' and auction_id in (select auction_id from belongsto where category = '" + chosenCat + "') order by name asc") ;
+			else
+				System.out.println("Error: Please enter a valid number.") ;
 			
+			System.out.println("\nSearch Results: ") ;
+			while(resultSet.next()) {
+				System.out.println("Auction ID: " + resultSet.getInt(1) + ", Product: " + resultSet.getString(2)
+						+ ", Description: " + resultSet.getString(3) + ", Highest Bid: " + resultSet.getInt(4)) ;
+			}
+		
 			promptMenu(1);
 		} catch(SQLException e) {
 			System.out.println("Error running database queries: " + e.toString());
 		}
 	}
-	
-	// not tested yet
+
+	//Search for products using up to two keywords
 	public void search() {
 		try {
 			String input = getUserInput("Please enter the first keyword you would like to search by");
-			String input2 = getUserInput("Enter the second keyword you would like to search by, or leave "
-					+ "this field blank if you only want to use one keyword");
+			String input2 = getUserInput("Enter the second keyword you would like to search by (optional)");
 
 			ResultSet resultSet;
 			String temp = "";
 			List<String> params;
 			if (input2.equals("")) {
-				System.out.println("input2 is empy");
+				//System.out.println("input2 is empy");
 				params = Arrays.asList(input);
 			} else {
-				temp = " and upper(description) like upper('%?%')";
+				temp = " and upper(description) like upper('%" + input2 + "%')";
 				params = Arrays.asList(input, input2);
 			}
-			resultSet = query("select auction_id, name, description from product where upper(description) like upper('%?%')" + temp, params);
-			
+			resultSet = query("select auction_id, name, description from product where upper(description) like upper('%" + input + "%')" + temp);
+						
 			System.out.println("\nSearch Results: ") ;
 			while(resultSet.next()) {
 				System.out.println("Auction ID: " + resultSet.getInt(1) + ", Product: " + resultSet.getString(2)
 						+ ", Description: " + resultSet.getString(3)) ;
 			}
-
+			System.out.println();
+			promptMenu(1);
 		} catch(SQLException e) {
 			System.out.println("Error running database queries: " + e.toString());
 		}
