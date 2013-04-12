@@ -1,6 +1,7 @@
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
@@ -57,7 +58,7 @@ public class MyAuction {
 	 */
 	public int getUserChoice(String title, List<String> choices, String prompt) {
 		// print choices
-		System.out.println(prompt + "\n" + HR);
+		System.out.println(title + "\n" + HR);
 		for (int i = 1; i <= choices.size(); i++) {
 			System.out.println("  " + i + ") " + choices.get(i - 1));
 		}
@@ -139,6 +140,7 @@ public class MyAuction {
 			switch(choice) {
 				case 1:
 					// Browse products
+					browse();
 					break;
 				case 2:
 					// Search products
@@ -188,6 +190,20 @@ public class MyAuction {
 	}
 	
 	/*
+	 * @param query SQL query
+	 * @return result set of query
+	 */
+	public ResultSet query(String query) {
+		try {
+			Statement s = connection.createStatement();
+			return s.executeQuery(query);
+		} catch (SQLException e) {
+			System.out.println("Error running database query: " + e.toString());
+			return null;
+		}
+	}
+	
+	/*
 	 * @param type 1:admin, 2:user
 	 * @return successful or invalid login
 	 */
@@ -216,42 +232,74 @@ public class MyAuction {
 			return false ; //If there was no match for the username/password, return false
 
 		}
-		catch(Exception e) {
+		catch(SQLException e) {
 			System.out.println("Error running database queries: " + e.toString());
 		}
 		return false ; //This should really never happen. I'm just making java happy
 	}
 	
-	public void browse()
-	{
-		try{
-		String input = getUserInput("What category do you want to search in?");
-		
-		statement = connection.createStatement() ;
-		//Need some way of listing the categories to get more specific.
-		//Any idea for the best way to do this?
-		
-		int sort = getUserChoice("How do you want your products sorted by?", Arrays.asList(
-			"Highest bid first",
-			"Lowest bid first",
-			"Alphabetically by product name"
-		), "Choose a sort option");
-		if(sort == 1)
-			query = "" ; //Will be added after categories
-		else if(sort == 2)
-			query = "" ;
-		else if(sort == 3)
-			query = "" ;
-		else
-			System.out.println("Error: You did not enter 1, 2, or 3.") ;
-		
-		//Once the category thing is sorted out, I can easily add the queries and then
-		//add a few lines to display the output.
-		
+	/*
+	 * @param parent parent category or null for root categories
+	 * @return list of categories with specified parent
+	 */
+	public List<String> getCategories(String parent) throws SQLException {
+		ResultSet r;
+		if (parent == null) {
+			r = query("select name from category where parent_category is null");
+		} else {
+			r = query("select name from category where parent_category = '" + parent + "'");
 		}
-		catch(Exception Ex) {
-	    System.out.println("Error running the sample queries.  Machine Error: " +
-			       Ex.toString());
+		
+		List<String> cats = new ArrayList<String>();
+		if (r.isBeforeFirst()) {
+			while (r.next()) {
+				cats.add(r.getString(1));
+			}
+			return cats;
+		} else {
+			// return null if result set is empty
+			return null;
+		}
+	}
+	
+	/*
+	 * Browse through products of a specific category
+	 */
+	public void browse() {
+		try {
+			// traverse through hierarchical categories
+			List<String> cats = null;
+			String chosenCat = null;
+			int choice = 0;
+			do {
+				cats = getCategories(chosenCat);
+				if (cats != null) {
+					String title = (chosenCat == null ? "Categories" : chosenCat);
+					choice = getUserChoice("\n" + title, cats, "Which category would you like to browse?");
+					chosenCat = cats.get(choice - 1);
+				}
+			} while(cats != null);
+			
+			// prompt user for sort method
+			int sort = getUserChoice("How do you want your products sorted by?", Arrays.asList(
+				"Highest bid first",
+				"Lowest bid first",
+				"Alphabetically by product name"
+			), "Choose a sort option");
+			
+			if(sort == 1)
+				query = "" ; //Will be added after categories
+			else if(sort == 2)
+				query = "" ;
+			else if(sort == 3)
+				query = "" ;
+
+			//Once the category thing is sorted out, I can easily add the queries and then
+			//add a few lines to display the output.
+			
+			promptMenu(1);
+		} catch(SQLException e) {
+			System.out.println("Error running database queries: " + e.toString());
 		}
 	}
 	
