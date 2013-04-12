@@ -68,7 +68,12 @@ public class MyAuction {
 		// prompt user for input
 		int choice;
 		do {
-			choice = Integer.parseInt(getUserInput(prompt));
+			try {
+				choice = Integer.parseInt(getUserInput(prompt));
+			} catch (NumberFormatException e) {
+				choice = 0;
+			}
+			
 		} while (choice <= 0 || choice > choices.size());
 		return choice;
 	}
@@ -201,12 +206,27 @@ public class MyAuction {
 	
 	/*
 	 * @param query SQL select query
-	 * @return result set of query
+	 * @return result set of query or null if empty
 	 */
 	public ResultSet query(String query) {
 		try {
 			Statement s = connection.createStatement();
-			return s.executeQuery(query);
+			ResultSet result = s.executeQuery(query);
+			// check to see if result is empty
+			if (result.isBeforeFirst()) {
+				return result;
+			} else {
+				return null;
+			}
+		} catch (SQLException e) {
+			System.out.println("Error running database query: " + e.toString());
+			return null;
+		}
+	}
+	
+	public PreparedStatement getPreparedQuery(String query) {
+		try {
+			return connection.prepareStatement(query);
 		} catch (SQLException e) {
 			System.out.println("Error running database query: " + e.toString());
 			return null;
@@ -218,13 +238,18 @@ public class MyAuction {
 	 * @param parameters list of string parameters to replace in query
 	 * @return result set of query
 	 */
-	public ResultSet query(String query, List<String> parameters) {
+	public ResultSet query(PreparedStatement ps, List<String> parameters) {
 		try {
-			PreparedStatement ps = connection.prepareStatement(query);
 			for (int i = 1; i <= parameters.size(); i++) {
 				ps.setString(i, parameters.get(i - 1)) ;
 			}
-			return ps.executeQuery();
+			ResultSet result = ps.executeQuery();
+			// check to see if result is empty
+			if (result.isBeforeFirst()) {
+				return result;
+			} else {
+				return null;
+			}
 		} catch (SQLException e) {
 			System.out.println("Error running database query: " + e.toString());
 			return null;
@@ -278,7 +303,7 @@ public class MyAuction {
 		}
 		
 		List<String> cats = new ArrayList<String>();
-		if (r.isBeforeFirst()) {
+		if (r != null) {
 			while (r.next()) {
 				cats.add(r.getString(1));
 			}
@@ -325,7 +350,7 @@ public class MyAuction {
 	
 	//not yet tested due to error in registerCustomer
 	//should be working fine though. Not much I could have messed up
-	public void updateDate() {
+	public void updateDate() throws SQLException {
 		String date ;
 		date = getUserInput("\nWhat do you want to set the date to? Please follow this format:\ndd-mm-yyyy/hh:mi:ssam\n") ;
 	
@@ -396,20 +421,22 @@ public class MyAuction {
 			String temp = "";
 			List<String> params;
 			if (input2.equals("")) {
-				//System.out.println("input2 is empy");
 				params = Arrays.asList(input);
 			} else {
-				temp = " and upper(description) like upper('%" + input2 + "%')";
+				temp = " and upper(description) like upper('%?%')";
 				params = Arrays.asList(input, input2);
 			}
-			resultSet = query("select auction_id, name, description from product where upper(description) like upper('%" + input + "%')" + temp);
+			PreparedStatement statement = getPreparedQuery("select auction_id, name, description from product where upper(description) like upper('%?%')" + temp);
+			resultSet = query(statement, params);
 						
 			System.out.println("\nSearch Results: ") ;
-			while(resultSet.next()) {
-				System.out.println("Auction ID: " + resultSet.getInt(1) + ", Product: " + resultSet.getString(2)
-						+ ", Description: " + resultSet.getString(3)) ;
+			if (resultSet != null) {
+				while(resultSet.next()) {
+					System.out.println("Auction ID: " + resultSet.getInt(1) + ", Product: " + resultSet.getString(2) + ", Description: " + resultSet.getString(3)) ;
+				}	
+			} else {
+				System.out.println("No products found.");
 			}
-			System.out.println();
 			promptMenu(1);
 		} catch(SQLException e) {
 			System.out.println("Error running database queries: " + e.toString());
