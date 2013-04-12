@@ -8,9 +8,9 @@ import java.util.Scanner;
 
 public class MyAuction {
 	private Connection connection; //used to hold the jdbc connection to the DB
-	private Statement statement; //used to create an instance of the connection
-	private ResultSet resultSet; //used to hold the result of your query (if one // exists)
-	private String query;  //this will hold the query we are using
+	//private Statement statement; //used to create an instance of the connection
+	//private ResultSet resultSet; //used to hold the result of your query (if one // exists)
+	//private String query;  //this will hold the query we are using
 	private String username, password;
 	private Scanner input;
 	
@@ -20,8 +20,8 @@ public class MyAuction {
 		try {
 			// get username and password
 			Scanner scanner = new Scanner(new File("db.config"));
-			username = scanner.nextLine();
-			password = scanner.nextLine();
+			String username = scanner.nextLine();
+			String password = scanner.nextLine();
 			scanner.close();
 			
 			try {
@@ -33,8 +33,7 @@ public class MyAuction {
 				
 				System.out.println("Welcome to MyAuction!");
 				promptMenu(0);
-			}
-			catch(Exception e)  {
+			} catch(SQLException e)  {
 				System.err.println("Error connecting to database: " + e.toString());
 			}
 		} catch (FileNotFoundException e) {
@@ -52,9 +51,11 @@ public class MyAuction {
 	}
 	
 	/*
-	 * @param title title of menu
-	 * @param choices list of menu choices
+	 * Prints a formatted list of choices and prompts the user for input
+	 * @param title title of choices
+	 * @param choices list of choices
 	 * @param prompt descriptive prompt for user input
+	 * @return user's choice
 	 */
 	public int getUserChoice(String title, List<String> choices, String prompt) {
 		// print choices
@@ -72,6 +73,13 @@ public class MyAuction {
 		return choice;
 	}
 	
+	/*
+	 * Prints a formatted list of choices and prompts the user for input
+	 * with a default descriptive prompt.
+	 * @param title title of choices
+	 * @param choices list of choices
+	 * @return user's choice
+	 */
 	public int getUserChoice(String title, List<String> choices) {
 		return getUserChoice(title, choices, "Choose a menu item");
 	}
@@ -144,6 +152,7 @@ public class MyAuction {
 					break;
 				case 2:
 					// Search products
+					search();
 					break;
 				case 3:
 					// Auction product
@@ -190,13 +199,31 @@ public class MyAuction {
 	}
 	
 	/*
-	 * @param query SQL query
+	 * @param query SQL select query
 	 * @return result set of query
 	 */
 	public ResultSet query(String query) {
 		try {
 			Statement s = connection.createStatement();
 			return s.executeQuery(query);
+		} catch (SQLException e) {
+			System.out.println("Error running database query: " + e.toString());
+			return null;
+		}
+	}
+	
+	/*
+	 * @param query SQL select query
+	 * @param parameters list of string parameters to replace in query
+	 * @return result set of query
+	 */
+	public ResultSet query(String query, List<String> parameters) {
+		try {
+			PreparedStatement ps = connection.prepareStatement(query);
+			for (int i = 1; i <= parameters.size(); i++) {
+				ps.setString(i, parameters.get(i - 1)) ;
+			}
+			return ps.executeQuery();
 		} catch (SQLException e) {
 			System.out.println("Error running database query: " + e.toString());
 			return null;
@@ -214,16 +241,15 @@ public class MyAuction {
 				System.out.println("You should never ever see this output.") ;
 			
 			System.out.println("\nPlease enter your login information.");
-			String username = getUserInput("Username");
-			String password = getUserInput("Password");
+			username = getUserInput("Username");
+			password = getUserInput("Password");
 
 			//checking to make sure the usn/pwd match something in the database
-			statement = connection.createStatement() ;
+			ResultSet resultSet;
 			if(type == 2) //Which database to check for the login info
-				query = "select login, password from customer" ;
+				resultSet = query("select login, password from customer");
 			else
-				query = "select login, password from administrator" ;
-			resultSet = statement.executeQuery(query) ;
+				resultSet = query("select login, password from administrator");
 			while(resultSet.next())
 			{
 				if(username.equals(resultSet.getString(1)) && password.equals(resultSet.getString(2)))
@@ -287,12 +313,14 @@ public class MyAuction {
 				"Alphabetically by product name"
 			), "Choose a sort option");
 			
+			/*
 			if(sort == 1)
 				query = "" ; //Will be added after categories
 			else if(sort == 2)
 				query = "" ;
 			else if(sort == 3)
 				query = "" ;
+			*/
 
 			//Once the category thing is sorted out, I can easily add the queries and then
 			//add a few lines to display the output.
@@ -303,41 +331,33 @@ public class MyAuction {
 		}
 	}
 	
-	public void search()
-	{
-		try{
-	
-		
-		String input = getUserInput("Please enter the first keyword you would like to search by");
-		String input2 = getUserInput("Enter the second keyword you would like to search by, or leave "
-			+ "this field blank if you only want to use one keyword");
-		
-		PreparedStatement updateStatement ;
-		if(input2.equals(""))
-		{
-			query = "select auction_id, name, description from product where upper(description) like upper('%?%')" ;
-			updateStatement = connection.prepareStatement(query) ;
-			updateStatement.setString(1, input) ;
-		}
-		else
-		{
-			query = "select auction_id, name, description from product where upper(description) like upper('%?%') and upper(description) like upper('%?%')" ;
-			updateStatement = connection.prepareStatement(query) ;
-			updateStatement.setString(1, input) ;
-			updateStatement.setString(2, input2) ;
-		}
-		resultSet = updateStatement.executeQuery(query) ;
-		System.out.println("\nSearch Results: ") ;
-		while(resultSet.next())
-		{
-			System.out.println("Auction ID: " + resultSet.getInt(1) + ", Product: " + resultSet.getString(2)
-					+ ", Description: " + resultSet.getString(3)) ;
-		}
-	
-		} //end try
-		catch(Exception Ex) {
-	    System.out.println("Error running the sample queries.  Machine Error: " +
-			       Ex.toString());
+	// not tested yet
+	public void search() {
+		try {
+			String input = getUserInput("Please enter the first keyword you would like to search by");
+			String input2 = getUserInput("Enter the second keyword you would like to search by, or leave "
+					+ "this field blank if you only want to use one keyword");
+
+			ResultSet resultSet;
+			String temp = "";
+			List<String> params;
+			if (input2.equals("")) {
+				System.out.println("input2 is empy");
+				params = Arrays.asList(input);
+			} else {
+				temp = " and upper(description) like upper('%?%')";
+				params = Arrays.asList(input, input2);
+			}
+			resultSet = query("select auction_id, name, description from product where upper(description) like upper('%?%')" + temp, params);
+			
+			System.out.println("\nSearch Results: ") ;
+			while(resultSet.next()) {
+				System.out.println("Auction ID: " + resultSet.getInt(1) + ", Product: " + resultSet.getString(2)
+						+ ", Description: " + resultSet.getString(3)) ;
+			}
+
+		} catch(SQLException e) {
+			System.out.println("Error running database queries: " + e.toString());
 		}
 	}
 
