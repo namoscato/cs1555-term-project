@@ -1,6 +1,9 @@
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.sql.*;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -282,6 +285,15 @@ public class MyAuction {
 	}
 	
 	/*
+	 * @param query SQL select query
+	 * @param str one parameter to replace in query
+	 * @return result set of query
+	 */
+	public ResultSet query(PreparedStatement ps, String str) {
+		return query(ps, Arrays.asList(str));
+	}
+	
+	/*
 	 * @param query SQL update query
 	 * @param parameters list of string parameters to replace in query
 	 * @return result of update
@@ -296,6 +308,15 @@ public class MyAuction {
 			handleSQLException(e);
 			return -1;
 		}
+	}
+	
+	/*
+	 * @param query SQL update query
+	 * @param str one parameter to replace in query
+	 * @return result of update
+	 */
+	public int queryUpdate(PreparedStatement ps, String str) {
+		return queryUpdate(ps, Arrays.asList(str));
 	}
 	
 	/*
@@ -383,7 +404,7 @@ public class MyAuction {
 				}
 				
 				login = getUserInput(prompt);
-				result = query(statement, Arrays.asList(login));
+				result = query(statement, login);
 				// sanity check (result should always be returning a count)
 				if (result != null) {
 					result.next();
@@ -407,12 +428,41 @@ public class MyAuction {
 	}
 	
 	/*
+	 * Check validity of date string
+	 * @param date date string
+	 * @param format date format
+	 * @return validity of date string
+	 */
+	private static boolean isDateValid(String date, String format) {
+        try {
+            DateFormat df = new SimpleDateFormat(format);
+            df.setLenient(false);
+            df.parse(date);
+            return true;
+        } catch (ParseException e) {
+            return false;
+        }
+	}
+	
+	/*
+	 * Check validity of date string on default format
+	 * @param date date string
+	 * @return validity of date string
+	 */
+	private static boolean isDateValid(String date) {
+		return isDateValid(date, "dd-MM-yyyy/hh:mm:ssa");
+	}
+	
+	/*
 	 * Update our system date.
 	 */
 	public void updateDate() {
-		String date = getUserInput("\nWhat do you want to set the date to? Please follow this format:\ndd-mm-yyyy/hh:mi:ssam\n");
-		// probably easier to validate string with java because a bunch of different exceptions could be thrown
-		queryUpdate(getPreparedQuery("update sys_time set my_time = to_date(?, 'dd-mm-yyyy/hh:mi:ssam')"), Arrays.asList(date));
+		String date;
+		do {
+			date = getUserInput("Please enter a date (must match dd-mm-yyyy/hh:mi:ssam)").toUpperCase();
+		} while(!isDateValid(date));
+		
+		queryUpdate(getPreparedQuery("update sys_time set my_time = to_date(?, 'dd-mm-yyyy/hh:mi:ssam')"), date);
 		promptMenu(2);
 	}
 	
