@@ -122,6 +122,8 @@ public class MyAuction {
 				choices = Arrays.asList(
 					"Highest volume leaf categories",
 					"Highest volume root categories",
+					"Most active bidders",
+					"Most active buyers",
 					"Return to admin menu"
 				);
 				choice = getUserChoice("Administrator statistics", choices);
@@ -161,15 +163,29 @@ public class MyAuction {
 		System.out.println("\n" + choices.get(choice - 1));
 		if (menu == 3) {
 			// deal with admin statistics menu
+			int months = 0, limit = 0;
+			if (choice < 5) {
+				months = getUserNumericInput("Number of previous months to include");
+				limit = getUserNumericInput("Please enter a limit");
+			}
 			switch(choice) {
 				case 1:
 					// Highest volume leaf categories
-					int limit = getUserNumericInput("Please enter a limit");
-					topLeafCategories(limit);
+					topLeafCategories(months, limit);
 					promptMenu(3);
 					break;
 				case 2:
 					// Highest volume root categories
+					promptMenu(3);
+					break;
+				case 3:
+					// Most active bidders
+					topActiveBidders(months, limit);
+					promptMenu(3);
+					break;
+				case 4:
+					// Most active buyers
+					topActiveBuyers(months, limit);
 					promptMenu(3);
 					break;
 				default:
@@ -601,10 +617,11 @@ public class MyAuction {
 	}
 	
 	/*
-	 * Print the top k highest volume leaf categories.
+	 * @param months the number of months to include in query
 	 * @param k number of categories to print
+	 * @return the top k highest volume leaf categories
 	 */
-	public void topLeafCategories(int k) {
+	public void topLeafCategories(int months, int k) {
 		try {
 			Map<String, Integer> map = new HashMap<String, Integer>();
 			List<String> cats = getLeafCategories();
@@ -612,7 +629,7 @@ public class MyAuction {
 			for (String cat : cats) {
 				CallableStatement cs = connection.prepareCall("{call ?:=product_count(?, ?)}");
 				cs.registerOutParameter(1, Types.INTEGER);
-				cs.setInt(2, 999); // return all results no matter what time
+				cs.setInt(2, months);
 				cs.setString(3, cat);
 				cs.execute();
 				map.put(cat, cs.getInt(1));
@@ -630,6 +647,54 @@ public class MyAuction {
 				System.out.println(cat.getValue() + "\t" + cat.getKey());
 				count++;
 				if (count == k) break;
+			}
+		} catch (SQLException e) {
+			handleSQLException(e);
+		}
+	}
+	
+	/*
+	 * @param months the number of months to include in query
+	 * @param k number of bidders to print
+	 * @return the k most active bidders
+	 */
+	public void topActiveBidders(int months, int k) {
+		try {
+			PreparedStatement s = getPreparedQuery("select * from (" +
+				"select login, bid_count(login, ?) as amount from customer where bid_count(login, ?) > 0 order by amount desc) where rownum <= ?");
+			s.setInt(1, months);
+			s.setInt(2, months);
+			s.setInt(3, k);
+			ResultSet bidders = s.executeQuery();
+			
+			// print out results
+			System.out.println(HR);
+			while (bidders.next()) {
+				System.out.println(bidders.getInt(2) + "\t" + bidders.getString(1));
+			}
+		} catch (SQLException e) {
+			handleSQLException(e);
+		}
+	}
+	
+	/*
+	 * @param months the number of months to include in query
+	 * @param k number of bidders to print
+	 * @return the k most active bidders
+	 */
+	public void topActiveBuyers(int months, int k) {
+		try {
+			PreparedStatement s = getPreparedQuery("select * from ( select login, buying_amount(login, ?) as amount" +
+				" from customer where buying_amount(login, ?) is not null order by amount desc) where rownum <= ?");
+			s.setInt(1, months);
+			s.setInt(2, months);
+			s.setInt(3, k);
+			ResultSet buyers = s.executeQuery();
+			
+			// print out results
+			System.out.println(HR);
+			while (buyers.next()) {
+				System.out.println(buyers.getInt(2) + "\t" + buyers.getString(1));
 			}
 		} catch (SQLException e) {
 			handleSQLException(e);

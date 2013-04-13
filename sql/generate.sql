@@ -457,16 +457,40 @@ return number is
   my_count number;
 begin
   select sum(amount) into my_count
-  from (
-    select distinct p.auction_id, p.amount
-    from bidlog b join product p on b.auction_id = p.auction_id
-    where p.status = 'sold' and b.bidder = user and b.bid_time >= add_months((select my_time from sys_time), -1 * months)
-  );
+  from product
+  where status = 'sold' and buyer = user and sell_date >= add_months((select my_time from sys_time), -1 * months)
+  group by buyer;
   return my_count;
 end;
 /
--- select buying_amount('user2', 4) from dual;
+-- select buying_amount('user4', 4) from dual;
 
+-- i. the top k highest volume categories (highest count of products sold), here we only
+--    care categories that do not contain any other subcategories (i.e, leaf nodes in the category hierarchy).
+-- implemented in java
+
+-- ii. the top k highest volume categories (highest count of products sold), we only care categories
+--     that do not belong to any other category (root nodes in the category hierarchy).
+select login from customer;
+-- iterate through logins and call bid_count() in Java
+
+-- iii. the top k most active bidders (highest count of bids placed)
+-- assume month = 12 and k = 5
+select * from (
+  select login, bid_count(login, 12) as amount
+  from customer
+  where bid_count(login, 12) > 0
+  order by amount desc
+) where rownum <= 5;
+
+-- iv. the top k most active buyers (highest total dollar amount spent)
+-- assume month = 12 and k = 5
+select * from (
+  select login, buying_amount(login, 12) as amount
+  from customer
+  where buying_amount(login, 12) is not null
+  order by amount desc
+) where rownum <= 5;
 
 -- ### 4. Additional Functional Requirements
 
