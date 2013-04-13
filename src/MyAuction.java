@@ -7,10 +7,7 @@ import java.util.List;
 import java.util.Scanner;
 
 public class MyAuction {
-	private Connection connection; //used to hold the jdbc connection to the DB
-	//private Statement statement; //used to create an instance of the connection
-	//private ResultSet resultSet; //used to hold the result of your query (if one // exists)
-	//private String query;  //this will hold the query we are using
+	private Connection connection;
 	private String username, password;
 	private Scanner input;
 	
@@ -43,11 +40,24 @@ public class MyAuction {
 	
 	/*
 	 * @param prompt descriptive prompt of input
-	 * @return trimmed line of user input
+	 * @return trimmed line of required user input
 	 */
 	public String getUserInput(String prompt) {
-		System.out.print(prompt + ": ");
-		return input.nextLine().trim();
+		return getUserInput(prompt, true);
+	}
+	
+	/*
+	 * @param prompt descriptive prompt of input
+	 * @param required whether input is optional or required
+	 * @return trimmed line of optional or required user input
+	 */
+	public String getUserInput(String prompt, boolean required) {
+		String str;
+		do {
+			System.out.print(prompt + ": ");
+			str = input.nextLine().trim();
+		} while(required && str.isEmpty());
+		return str;
 	}
 	
 	/*
@@ -93,7 +103,7 @@ public class MyAuction {
 	 * Prints menu and prompts user input
 	 * @param menu 0:main, 1:user, 2:admin
 	 */
-	public void promptMenu(int menu) throws SQLException {
+	public void promptMenu(int menu) {
 		System.out.println();
 		// print choices
 		List<String> choices = null;
@@ -205,6 +215,15 @@ public class MyAuction {
 	}
 	
 	/*
+	 * @param e exception
+	 */
+	public void handleSQLException(Exception e) {
+		System.err.println("Error running database query: " + e.toString());
+		e.printStackTrace();
+		System.exit(1);
+	}
+	
+	/*
 	 * @param query SQL select query
 	 * @return result set of query or null if empty
 	 */
@@ -219,16 +238,20 @@ public class MyAuction {
 				return null;
 			}
 		} catch (SQLException e) {
-			System.out.println("Error running database query: " + e.toString());
+			handleSQLException(e);
 			return null;
 		}
 	}
 	
+	/*
+	 * @param query SQL query with some question marks
+	 * @return prepared statement ready for input
+	 */
 	public PreparedStatement getPreparedQuery(String query) {
 		try {
 			return connection.prepareStatement(query);
 		} catch (SQLException e) {
-			System.out.println("Error running database query: " + e.toString());
+			handleSQLException(e);
 			return null;
 		}
 	}
@@ -241,9 +264,10 @@ public class MyAuction {
 	public ResultSet query(PreparedStatement ps, List<String> parameters) {
 		try {
 			for (int i = 1; i <= parameters.size(); i++) {
-				ps.setString(i, parameters.get(i - 1)) ;
+				ps.setString(i, parameters.get(i - 1));
 			}
 			ResultSet result = ps.executeQuery();
+			
 			// check to see if result is empty
 			if (result.isBeforeFirst()) {
 				return result;
@@ -251,7 +275,7 @@ public class MyAuction {
 				return null;
 			}
 		} catch (SQLException e) {
-			System.out.println("Error running database query: " + e.toString());
+			handleSQLException(e);
 			return null;
 		}
 	}
@@ -283,18 +307,17 @@ public class MyAuction {
 			}
 			return false ; //If there was no match for the username/password, return false
 
+		} catch(SQLException e) {
+			handleSQLException(e);
+			return false;
 		}
-		catch(SQLException e) {
-			System.out.println("Error running database queries: " + e.toString());
-		}
-		return false ; //This should really never happen. I'm just making java happy
 	}
 	
 	/*
 	 * @param parent parent category or null for root categories
 	 * @return list of categories with specified parent
 	 */
-	public List<String> getCategories(String parent) throws SQLException {
+	public List<String> getCategories(String parent) {
 		ResultSet r;
 		if (parent == null) {
 			r = query("select name from category where parent_category is null");
@@ -304,46 +327,63 @@ public class MyAuction {
 		
 		List<String> cats = new ArrayList<String>();
 		if (r != null) {
-			while (r.next()) {
-				cats.add(r.getString(1));
+			try {
+				while (r.next()) {
+					cats.add(r.getString(1));
+				}
+				return cats;
+			} catch (SQLException e) {
+				handleSQLException(e);
+				return null;
 			}
-			return cats;
 		} else {
 			// return null if result set is empty
 			return null;
 		}
 	}
 	
-	//Work in progress -- currently one error and it's done
-	public void registerCustomer() throws SQLException {
+	/*
+	 * Registers an admin or customer.
+	 */
+	public void registerCustomer() {
 		String name, address, email, login, password, admin ;
-		name = getUserInput("\nPlease provide the following information for the new user: \nName:") ;
-		address = getUserInput("Address:") ;
-		email = getUserInput("Email Address:") ;
-		login = getUserInput("Username:") ;
-		password = getUserInput("Password:") ;
-		admin = getUserInput("Is this user an admin? (yes/no):") ;
+		System.out.println("Please provide the following information for the new user:");
+		name = getUserInput("Name") ;
+		address = getUserInput("Address") ;
+		email = getUserInput("Email Address") ;
 		
-		//Checking to see if there is already a registered user with that login name
-		boolean success = true ;
-		int exists = 0 ;
-		ResultSet resultSet = null ;
-		resultSet = query("select count(login) from customer where login = '" + login + "'") ;
-		while(resultSet.next()) { //**Error right here -- Not sure why : /
-			exists = resultSet.getInt(1) ; 
+		// make sure username doesn't already exist
+		login = "";
+		PreparedStatement statement = getPreparedQuery("select count(login) from customer where login = ?");
+		ResultSet result = null;
+		boolean firstAttempt = true;
+		String prompt = "Username";
+		try {
+			do {
+				if (!firstAttempt) {
+					prompt = "Username already exists! Please enter another";
+				}
+				
+				login = getUserInput(prompt);
+				result = query(statement, Arrays.asList(login));
+				// sanity check (result should always be returning a count)
+				if (result != null) {
+					result.next();
+				}
+				
+				firstAttempt = false;
+			} while(result.getInt(1) > 0);
+		} catch (SQLException e) {
+			handleSQLException(e);
 		}
 		
-		if(exists != 0) { 
-			System.out.println("\nSorry, an account with that username already exists.") ;
-			success = false ;
-		}
-		else if(admin.equals("yes") || admin.equals("Yes"))
-			resultSet = query("insert into administrator values ('" + login + "', '" + password + "', '" + name + "', '" + address + "', '" + email + "')") ;
-		else
-			resultSet = query("insert into administrator values ('" + login + "', '" + password + "', '" + name + "', '" + address + "', '" + email + "')") ;
-
-		if(success)
-			System.out.println("\nNew user successfully added!") ;
+		password = getUserInput("Password") ;
+		admin = getUserInput("Is this user an admin? (yes/no)").toLowerCase();
+		
+		// insert user into database
+		String type = (admin.equals("yes") ? "administrator" : "customer");
+		statement = getPreparedQuery("insert into " + type + " values (?, ?, ?, ?, ?)");
+		result = query(statement, Arrays.asList(login, password, name, address, email));
 		
 		promptMenu(2);
 	}
@@ -415,7 +455,7 @@ public class MyAuction {
 	public void search() {
 		try {
 			String input = getUserInput("Please enter the first keyword you would like to search by");
-			String input2 = getUserInput("Enter the second keyword you would like to search by (optional)");
+			String input2 = getUserInput("Enter the second keyword you would like to search by (optional)", false);
 
 			ResultSet resultSet;
 			String temp = "";
