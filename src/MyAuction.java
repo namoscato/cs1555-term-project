@@ -151,6 +151,7 @@ public class MyAuction {
 					break;
 				case 2:
 					// Update system date
+					updateDate();
 					break;
 				case 3:
 					// Statistics
@@ -281,6 +282,23 @@ public class MyAuction {
 	}
 	
 	/*
+	 * @param query SQL update query
+	 * @param parameters list of string parameters to replace in query
+	 * @return result of update
+	 */
+	public int queryUpdate(PreparedStatement ps, List<String> parameters) {
+		try {
+			for (int i = 1; i <= parameters.size(); i++) {
+				ps.setString(i, parameters.get(i - 1));
+			}
+			return ps.executeUpdate();
+		} catch (SQLException e) {
+			handleSQLException(e);
+			return -1;
+		}
+	}
+	
+	/*
 	 * @param type 1:admin, 2:user
 	 * @return successful or invalid login
 	 */
@@ -388,19 +406,13 @@ public class MyAuction {
 		promptMenu(2);
 	}
 	
-	//not yet tested due to error in registerCustomer
-	//should be working fine though. Not much I could have messed up
-	public void updateDate() throws SQLException {
-		String date ;
-		date = getUserInput("\nWhat do you want to set the date to? Please follow this format:\ndd-mm-yyyy/hh:mi:ssam\n") ;
-	
-		ResultSet resultSet ;
-		resultSet = query("update sys_time set my_time = to_date('" + date + "', 'dd-mm-yyyy/hh:mi:ssam'") ;
-		if(resultSet == null)
-			System.out.println("Error: please enter the date in the correct format.") ;
-		else
-			System.out.println("Update successful!") ;
-		
+	/*
+	 * Update our system date.
+	 */
+	public void updateDate() {
+		String date = getUserInput("\nWhat do you want to set the date to? Please follow this format:\ndd-mm-yyyy/hh:mi:ssam\n");
+		// probably easier to validate string with java because a bunch of different exceptions could be thrown
+		queryUpdate(getPreparedQuery("update sys_time set my_time = to_date(?, 'dd-mm-yyyy/hh:mi:ssam')"), Arrays.asList(date));
 		promptMenu(2);
 	}
 	
