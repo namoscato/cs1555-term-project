@@ -4,10 +4,7 @@ import java.sql.*;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
 public class MyAuction {
 	private Connection connection;
@@ -51,6 +48,20 @@ public class MyAuction {
 	
 	/*
 	 * @param prompt descriptive prompt of input
+	 * @return numeric input
+	 */
+	public int getUserNumericInput(String prompt) {
+		while (true) {
+			try {
+				return Integer.parseInt(getUserInput(prompt));
+			} catch (NumberFormatException e) {
+				continue;
+			}	
+		}
+	}
+	
+	/*
+	 * @param prompt descriptive prompt of input
 	 * @param required whether input is optional or required
 	 * @return trimmed line of optional or required user input
 	 */
@@ -81,12 +92,7 @@ public class MyAuction {
 		// prompt user for input
 		int choice;
 		do {
-			try {
-				choice = Integer.parseInt(getUserInput(prompt));
-			} catch (NumberFormatException e) {
-				choice = 0;
-			}
-			
+			choice = getUserNumericInput(prompt);
 		} while (choice <= 0 || choice > choices.size());
 		return choice;
 	}
@@ -104,7 +110,7 @@ public class MyAuction {
 	
 	/*
 	 * Prints menu and prompts user input
-	 * @param menu 0:main, 1:user, 2:admin
+	 * @param menu 0:main, 1:user, 2:admin, 3:admin_stats
 	 */
 	public void promptMenu(int menu) {
 		System.out.println();
@@ -112,6 +118,14 @@ public class MyAuction {
 		List<String> choices = null;
 		int choice = 0;
 		switch(menu) {
+			case 3:
+				choices = Arrays.asList(
+					"Highest volume leaf categories",
+					"Highest volume root categories",
+					"Return to admin menu"
+				);
+				choice = getUserChoice("Administrator statistics", choices);
+				break;
 			case 2:
 				choices = Arrays.asList(
 					"New customer registration",
@@ -145,19 +159,39 @@ public class MyAuction {
 		
 		// handle user's choice
 		System.out.println("\n" + choices.get(choice - 1));
-		if (menu == 2) {
+		if (menu == 3) {
+			// deal with admin statistics menu
+			switch(choice) {
+				case 1:
+					// Highest volume leaf categories
+					int limit = getUserNumericInput("Please enter a limit");
+					topLeafCategories(limit);
+					promptMenu(3);
+					break;
+				case 2:
+					// Highest volume root categories
+					promptMenu(3);
+					break;
+				default:
+					promptMenu(2);
+					break;
+			}
+		} else if (menu == 2) {
 			// deal with admin menu choices
 			switch(choice) {
 				case 1:
 					// New customer registration
-					registerCustomer() ;
+					registerCustomer();
+					promptMenu(2);
 					break;
 				case 2:
 					// Update system date
 					updateDate();
+					promptMenu(2);
 					break;
 				case 3:
 					// Statistics
+					promptMenu(3);
 					break;
 				default:
 					promptMenu(0);
@@ -382,6 +416,30 @@ public class MyAuction {
 	}
 	
 	/*
+	 * @return list of leaf categories of parent
+	 */
+	public List<String> getLeafCategories() {
+		return getLeafCategories(null);
+	}
+	
+	/*
+	 * @param parent parent category or null for root categories
+	 * @return list of leaf categories of parent
+	 */
+	private List<String> getLeafCategories(String parent) {
+		List<String> children = getCategories(parent);
+		if (children == null) {
+			return Arrays.asList(parent);
+		} else {
+			List<String> leaves = new ArrayList<String>();
+			for (String child : children) {
+				leaves.addAll(getLeafCategories(child));
+			}
+			return leaves;
+		}
+	}
+	
+	/*
 	 * Registers an admin or customer.
 	 */
 	public void registerCustomer() {
@@ -423,8 +481,6 @@ public class MyAuction {
 		String type = (admin.equals("yes") ? "administrator" : "customer");
 		statement = getPreparedQuery("insert into " + type + " values (?, ?, ?, ?, ?)");
 		result = query(statement, Arrays.asList(login, password, name, address, email));
-		
-		promptMenu(2);
 	}
 	
 	/*
@@ -463,7 +519,6 @@ public class MyAuction {
 		} while(!isDateValid(date));
 		
 		queryUpdate(getPreparedQuery("update sys_time set my_time = to_date(?, 'dd-mm-yyyy/hh:mi:ssam')"), date);
-		promptMenu(2);
 	}
 	
 	/*
@@ -509,7 +564,7 @@ public class MyAuction {
 		
 			promptMenu(1);
 		} catch(SQLException e) {
-			System.out.println("Error running database queries: " + e.toString());
+			handleSQLException(e);
 		}
 	}
 
@@ -541,9 +596,66 @@ public class MyAuction {
 			}
 			promptMenu(1);
 		} catch(SQLException e) {
-			System.out.println("Error running database queries: " + e.toString());
+			handleSQLException(e);
 		}
 	}
+	
+	/*
+	 * Print the top k highest volume leaf categories.
+	 * @param k number of categories to print
+	 */
+	public void topLeafCategories(int k) {
+		try {
+			Map<String, Integer> map = new HashMap<String, Integer>();
+			List<String> cats = getLeafCategories();
+			
+			for (String cat : cats) {
+				CallableStatement cs = connection.prepareCall("{call ?:=product_count(?, ?)}");
+				cs.registerOutParameter(1, Types.INTEGER);
+				cs.setInt(2, 999); // return all results no matter what time
+				cs.setString(3, cat);
+				cs.execute();
+				map.put(cat, cs.getInt(1));
+			}
+			
+			// sort map
+			ValueComparator vc = new ValueComparator(map);
+			Map<String, Integer> sorted = new TreeMap<String, Integer>(vc);
+			sorted.putAll(map);
+			
+			System.out.println("\n" + HR);
+			
+			int count = 0;
+			for (Map.Entry<String, Integer> cat : sorted.entrySet()) {
+				System.out.println(cat.getValue() + "\t" + cat.getKey());
+				count++;
+				if (count == k) break;
+			}
+		} catch (SQLException e) {
+			handleSQLException(e);
+		}
+	}
+	
+	/*
+	 * Class used to sort results of various statistic queries. Sorts
+	 * descending and uses keys as a tiebraker.
+	 */
+	private static class ValueComparator implements Comparator<String> {
+        private Map<String, Integer> base;
+        
+        ValueComparator(Map<String, Integer> base) {
+            this.base = base;
+        }
+        
+        public int compare(String a, String b) {
+            Integer x = base.get(a);
+            Integer y = base.get(b);
+            if (x.equals(y)) {
+                return a.compareTo(b);
+            }
+            return y.compareTo(x);
+        }
+    }
 
 	public static void main(String args[]) {
 		MyAuction test = new MyAuction();
