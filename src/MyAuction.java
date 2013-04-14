@@ -623,6 +623,39 @@ public class MyAuction {
 		}
 	}
 	
+	//Place bid on product currently underauction
+	//I'll finish this up later today once I get back from my meeting I have
+	//Not tested at all
+	public void place_bid() {
+		String a_id, bid ;
+		System.out.println("Please provide the following bid information:");
+		a_id = getUserNumericInput("Auction ID") ;
+		address = getUserNumericInput("Bid Amount") ;
+		
+		try {
+			CallableStatement cs = connection.prepareCall("{call ?:=validate_bid(?, ?)}") ;
+			cs.registerOutParameter(1, Types.INTEGER) ;
+			cs.registerOutParameter(2, Types.INTEGER) ;
+			cs.setInt(1, a_id) ;
+			cs.setInt(2, bid) ;
+			cs.execute() ;
+			int output = cs.getInt(1) ;
+			
+			if(output == 1) {
+				List<String> params;
+				params = Arrays.asList(a_id, username, bid) ;
+				PreparedStatement statement = getPreparedQuery("insert into bidlog values(1, ?, ?, (select my_time from sys_time), ?)");
+				resultSet = query(statement, params);
+			}
+			else if(output == 2) 
+				System.out.println("\nError: Your bid is lower than the current highest bid.\n") ;
+			else
+				System.out.println("\nError: You are placing a bid on an invalid product.\n") ;
+		} catch (SQLException e) {
+			handleSQLException(e);
+		}
+	}
+	
 	/*
 	 * @param months the number of months to include in query
 	 * @param k number of categories to print

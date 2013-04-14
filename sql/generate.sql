@@ -326,7 +326,8 @@ begin
   return 1;
 exception
   when invalid then
-    return 0;
+    return 2; --set to 2 so in java there can be a specific error for if the bid is
+	--invalid due to it being too low, or on an incorrect product
   when others then
     return 0;
 end;
