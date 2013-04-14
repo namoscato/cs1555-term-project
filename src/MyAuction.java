@@ -479,6 +479,11 @@ public class MyAuction {
 				}
 				
 				login = getUserInput(prompt);
+				while(login.length() > 10)
+				{
+					System.out.println("Error: Username must be 10 characters or less. Please enter another.");
+					login = getUserInput(prompt) ;
+				}
 				result = query(statement, login);
 				// sanity check (result should always be returning a count)
 				if (result != null) {
@@ -498,6 +503,7 @@ public class MyAuction {
 		String type = (admin.equals("yes") ? "administrator" : "customer");
 		statement = getPreparedQuery("insert into " + type + " values (?, ?, ?, ?, ?)");
 		result = query(statement, Arrays.asList(login, password, name, address, email));
+		System.out.println("\nUser successfully added!\n") ;
 	}
 	
 	/*
