@@ -132,6 +132,7 @@ public class MyAuction {
 				choices = Arrays.asList(
 					"New customer registration",
 					"Update system date",
+					"Product statistics",
 					"Statistics",
 					"Logout"
 				);
@@ -207,6 +208,12 @@ public class MyAuction {
 					promptMenu(2);
 					break;
 				case 3:
+					// Product statistics
+					String customer = getUserInput("Enter customer username or leave blank to display all products", false);
+					productStatistics(customer);
+					promptMenu(2);
+					break;
+				case 4:
 					// Statistics
 					promptMenu(3);
 					break;
@@ -626,6 +633,7 @@ public class MyAuction {
 	//Place bid on product currently underauction
 	//I'll finish this up later today once I get back from my meeting I have
 	//Not tested at all
+	/*
 	public void place_bid() {
 		String a_id, bid ;
 		System.out.println("Please provide the following bid information:");
@@ -655,6 +663,7 @@ public class MyAuction {
 			handleSQLException(e);
 		}
 	}
+	*/
 	
 	/*
 	 * @param months the number of months to include in query
@@ -765,6 +774,55 @@ public class MyAuction {
 			}
 		}
 		return result;
+	}
+	
+	public String createTableHeading(String[] titles, int[] widths) {
+		String result = "\n";
+		for (int i = 0; i < titles.length; i++) {
+			result += String.format("%-" + widths[i] + "s ", titles[i].toUpperCase());
+		}
+		result += "\n";
+	
+		// construct hr string
+		for (int i = 0; i < widths.length; i++) {
+			for (int j = 0; j < widths[i]; j++) {
+				result += '-';
+			}
+			result += ' ';
+		}
+		
+		return result;
+	}
+	
+	/*
+	 * Prints a summary table of product statistics
+	 * @param customer option seller filter
+	 */
+	public void productStatistics(String customer) {
+		try {
+			String query = "select name, status, amount as highest_bid, login, seller from (" +
+				"select p.name, p.status, p.amount, b.bidder as login, p.seller from product p join bidlog b on p.auction_id = b.auction_id and p.amount = b.amount where p.status <> 'sold' " +
+				"union select name, status, amount, buyer as login, seller from product where status = 'sold')";
+			ResultSet result;
+			if (customer.isEmpty()) {
+				result = query(query);
+			} else {
+				query += " where seller = ?";
+				PreparedStatement s = getPreparedQuery(query);
+				s.setString(1, customer);
+				result = s.executeQuery();
+			}
+			
+			// print out results
+			String[] titles = {"Name", "Status", "Highest Bid", "Bidder/Buyer"};
+			int[] widths = {20, 20, 15, 15};
+			System.out.println(createTableHeading(titles, widths));
+			while(result.next()) {
+				System.out.printf("%-20s %-20s %15d %-15s\n", result.getString(1), result.getString(2), result.getInt(3), result.getString(4));
+			}
+		} catch (SQLException e) {
+			handleSQLException(e);
+		}
 	}
 	
 	/*
