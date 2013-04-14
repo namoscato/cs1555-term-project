@@ -40,20 +40,12 @@ public class MyAuction {
 	
 	/*
 	 * @param prompt descriptive prompt of input
-	 * @return trimmed line of required user input
-	 */
-	public String getUserInput(String prompt) {
-		return getUserInput(prompt, true);
-	}
-	
-	/*
-	 * @param prompt descriptive prompt of input
 	 * @return numeric input
 	 */
 	public int getUserNumericInput(String prompt) {
 		while (true) {
 			try {
-				return Integer.parseInt(getUserInput(prompt));
+				return Integer.parseInt(getUserInput(prompt, -1));
 			} catch (NumberFormatException e) {
 				continue;
 			}	
@@ -62,15 +54,41 @@ public class MyAuction {
 	
 	/*
 	 * @param prompt descriptive prompt of input
+	 * @return trimmed line of required user input
+	 */
+	public String getUserInput(String prompt) {
+		return getUserInput(prompt, true, -1);
+	}
+	
+	/*
+	 * @param prompt descriptive prompt of input
+	 * @param length maximum length of input
+	 * @return trimmed line of required user input
+	 */
+	public String getUserInput(String prompt, int length) {
+		return getUserInput(prompt, true, length);
+	}
+	
+	/*
+	 * @param prompt descriptive prompt of input
 	 * @param required whether input is optional or required
 	 * @return trimmed line of optional or required user input
 	 */
-	public String getUserInput(String prompt, boolean required) {
+	public String getUserInput(String prompt, boolean required, int length) {
+		boolean lengthCheck;
 		String str;
 		do {
 			System.out.print(prompt + ": ");
 			str = input.nextLine().trim();
-		} while(required && str.isEmpty());
+			
+			// check length if necessary
+			if (length > 0 && str.length() > length) {
+				System.out.println("Sorry, input can only be " + length + " characters (yours was " + str.length() + ").");
+				lengthCheck = true;
+			} else {
+				lengthCheck = false;
+			}
+		} while(lengthCheck || required && str.isEmpty());
 		return str;
 	}
 	
@@ -209,7 +227,7 @@ public class MyAuction {
 					break;
 				case 3:
 					// Product statistics
-					String customer = getUserInput("Enter customer username or leave blank to display all products", false);
+					String customer = getUserInput("Enter customer username or leave blank to display all products", false, -1);
 					productStatistics(customer);
 					promptMenu(2);
 					break;
@@ -469,9 +487,9 @@ public class MyAuction {
 	public void registerCustomer() {
 		String name, address, email, login, password, admin ;
 		System.out.println("Please provide the following information for the new user:");
-		name = getUserInput("Name") ;
-		address = getUserInput("Address") ;
-		email = getUserInput("Email Address") ;
+		name = getUserInput("Name", 10) ;
+		address = getUserInput("Address", 30) ;
+		email = getUserInput("Email Address", 20) ;
 		
 		// make sure username doesn't already exist
 		login = "";
@@ -485,12 +503,7 @@ public class MyAuction {
 					prompt = "Username already exists! Please enter another";
 				}
 				
-				login = getUserInput(prompt);
-				while(login.length() > 10)
-				{
-					System.out.println("Error: Username must be 10 characters or less. Please enter another.");
-					login = getUserInput(prompt) ;
-				}
+				login = getUserInput(prompt, 10);
 				result = query(statement, login);
 				// sanity check (result should always be returning a count)
 				if (result != null) {
@@ -503,7 +516,7 @@ public class MyAuction {
 			handleSQLException(e);
 		}
 		
-		password = getUserInput("Password") ;
+		password = getUserInput("Password", 10) ;
 		admin = getUserInput("Is this user an admin? (yes/no)").toLowerCase();
 		
 		// insert user into database
@@ -602,7 +615,7 @@ public class MyAuction {
 	public void search() {
 		try {
 			String input = getUserInput("Please enter the first keyword you would like to search by");
-			String input2 = getUserInput("Enter the second keyword you would like to search by (optional)", false);
+			String input2 = getUserInput("Enter the second keyword you would like to search by (optional)", false, -1);
 
 			ResultSet resultSet;
 			String temp = "";
