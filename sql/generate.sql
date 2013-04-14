@@ -432,7 +432,7 @@ return number is
 begin
   select count(p.auction_id) into my_count
   from product p join belongsto b on p.auction_id = b.auction_id
-  where b.category = cat and p.sell_date >= add_months((select my_time from sys_time), -1 * months);
+  where b.category = cat and p.status = 'sold' and p.sell_date >= add_months((select my_time from sys_time), -1 * months);
   return my_count;
 end;
 /
@@ -467,12 +467,20 @@ end;
 
 -- i. the top k highest volume categories (highest count of products sold), here we only
 --    care categories that do not contain any other subcategories (i.e, leaf nodes in the category hierarchy).
--- implemented in java
+-- recursively implemented in java using
+-- select name from category where parent_category = parent
 
 -- ii. the top k highest volume categories (highest count of products sold), we only care categories
 --     that do not belong to any other category (root nodes in the category hierarchy).
-select login from customer;
--- iterate through logins and call bid_count() in Java
+-- for each root category, do this:
+-- assume root category and child categories is list: 'Computer Science' and 'Computer books'
+-- assume months = 12
+select count(auction_id) from (
+  select distinct p.auction_id
+  from product p join belongsto b on p.auction_id = b.auction_id
+  where p.status = 'sold' and p.sell_date >= add_months((select my_time from sys_time), -1 * 13) and b.category in ('Computer Science', 'Math', 'Philosophy', 'Fiction books', 'Magazines')
+);
+-- then, add these results to a SortedMap in Java and only list the top k results
 
 -- iii. the top k most active bidders (highest count of bids placed)
 -- assume month = 12 and k = 5

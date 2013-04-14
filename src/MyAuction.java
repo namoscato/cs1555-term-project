@@ -176,6 +176,7 @@ public class MyAuction {
 					break;
 				case 2:
 					// Highest volume root categories
+					topRootCategories(months, limit);
 					promptMenu(3);
 					break;
 				case 3:
@@ -626,8 +627,8 @@ public class MyAuction {
 			Map<String, Integer> map = new HashMap<String, Integer>();
 			List<String> cats = getLeafCategories();
 			
+			CallableStatement cs = connection.prepareCall("{call ?:=product_count(?, ?)}");
 			for (String cat : cats) {
-				CallableStatement cs = connection.prepareCall("{call ?:=product_count(?, ?)}");
 				cs.registerOutParameter(1, Types.INTEGER);
 				cs.setInt(2, months);
 				cs.setString(3, cat);
@@ -640,8 +641,7 @@ public class MyAuction {
 			Map<String, Integer> sorted = new TreeMap<String, Integer>(vc);
 			sorted.putAll(map);
 			
-			System.out.println("\n" + HR);
-			
+			System.out.println(HR);
 			int count = 0;
 			for (Map.Entry<String, Integer> cat : sorted.entrySet()) {
 				System.out.println(cat.getValue() + "\t" + cat.getKey());
@@ -651,6 +651,81 @@ public class MyAuction {
 		} catch (SQLException e) {
 			handleSQLException(e);
 		}
+	}
+	
+	/*
+	 * @param months the number of months to include in query
+	 * @param k number of categories to print
+	 * @return the top k highest volume root categories
+	 */
+	public void topRootCategories(int months, int k) {
+		try {
+			Map<String, Integer> map = new HashMap<String, Integer>();
+			List<String> rootCats = getCategories(null);
+			
+			for (String root : rootCats) {
+				List<String> underRoot = new ArrayList<String>(Arrays.asList(root));
+				underRoot.addAll(getChildCategories(root));
+				
+				// count products sold under root category
+				PreparedStatement s = getPreparedQuery("select count(auction_id) from (" +
+					"select distinct p.auction_id from product p join belongsto b on p.auction_id = b.auction_id " +
+					"where p.status = 'sold' and p.sell_date >= add_months((select my_time from sys_time), -1 * ?) " +
+					"and b.category in (" + formatList(underRoot, '\'', ", ") + "))");
+				s.setInt(1, months);
+				ResultSet result = s.executeQuery();
+				result.next();
+				map.put(root, result.getInt(1));
+			}
+			
+			// sort map
+			ValueComparator vc = new ValueComparator(map);
+			Map<String, Integer> sorted = new TreeMap<String, Integer>(vc);
+			sorted.putAll(map);
+			
+			System.out.println(HR);
+			int count = 0;
+			for (Map.Entry<String, Integer> cat : sorted.entrySet()) {
+				System.out.println(cat.getValue() + "\t" + cat.getKey());
+				count++;
+				if (count == k) break;
+			}
+		} catch (SQLException e) {
+			handleSQLException(e);
+		}
+	}
+	
+	/*
+	 * @param parent parent category
+	 * @return list of all categories under a parent node
+	 */
+	public List<String> getChildCategories(String parent) {
+		List<String> children = getCategories(parent);
+		if (children == null) {
+			return Arrays.asList(parent);
+		} else {
+			List<String> result = new ArrayList<String>();
+			for (String cat : children) {
+				result.addAll(getChildCategories(cat));
+			}
+			return result;
+		}
+	}
+	
+	/*
+	 * @param list list of strings
+	 * @param del delimiter that will separated formated list
+	 * @return formated list of strings
+	 */
+	public String formatList(List<String> list, char surround, String del) {
+		String result = "";
+		for (int i = 0; i < list.size(); i++) {
+			result += surround + list.get(i) + surround;
+			if (i < list.size() - 1) {
+				result += del;
+			}
+		}
+		return result;
 	}
 	
 	/*
