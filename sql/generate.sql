@@ -306,6 +306,7 @@ return int is
   amount int;
   status varchar2(20);
 begin
+  set transaction isolation level serializable name 'bid' ;
   select amount into amount
   from product
   where auction_id = id;
@@ -322,7 +323,7 @@ begin
   if status <> 'underauction' then
     raise invalid;
   end if;
-
+  commit ;
   return 1;
 exception
   when invalid then
