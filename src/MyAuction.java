@@ -5,6 +5,8 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class MyAuction {
 	private Connection connection;
@@ -57,7 +59,7 @@ public class MyAuction {
 	 * @return trimmed line of required user input
 	 */
 	public String getUserInput(String prompt) {
-		return getUserInput(prompt, true, -1);
+		return getUserInput(prompt, -1, true);
 	}
 	
 	/*
@@ -66,7 +68,7 @@ public class MyAuction {
 	 * @return trimmed line of required user input
 	 */
 	public String getUserInput(String prompt, int length) {
-		return getUserInput(prompt, true, length);
+		return getUserInput(prompt, length, true);
 	}
 	
 	/*
@@ -74,7 +76,7 @@ public class MyAuction {
 	 * @param required whether input is optional or required
 	 * @return trimmed line of optional or required user input
 	 */
-	public String getUserInput(String prompt, boolean required, int length) {
+	public String getUserInput(String prompt, int length, boolean required) {
 		boolean lengthCheck;
 		String str;
 		do {
@@ -226,7 +228,7 @@ public class MyAuction {
 					break;
 				case 3:
 					// Product statistics
-					String customer = getUserInput("Enter customer username or leave blank to display all products", false, -1);
+					String customer = getUserInput("Enter customer username or leave blank to display all products", -1, false);
 					productStatistics(customer);
 					promptMenu(2);
 					break;
@@ -264,6 +266,31 @@ public class MyAuction {
 					break;
 				case 3:
 					// Auction product
+					System.out.println("Please enter the following product information:");
+					String name = getUserInput("Product name", 20);
+					String description = getUserInput("Description (optional)", 30, false);
+					
+					// add categories
+					List<String> categories = new ArrayList<String>();
+					Pattern regex = Pattern.compile("[^\\s\"']+|\"([^\"]*)\"");
+					Matcher matcher = regex.matcher(getUserInput("Categories (separated by space and surrounded by \"s)", -1));
+					while (matcher.find()) {
+						// check if category is valid? or just do that in SQL?
+					    if (matcher.group(1) != null) {
+					        // add quoted phrase without the quotes
+					    	categories.add(matcher.group(1));
+					    } else {
+					        // add unquoted word
+					    	categories.add(matcher.group());
+					    }
+					}
+					
+					int days = getUserNumericInput("Number of days for auction");
+					int price = getUserNumericInput("Minimum starting price");
+					
+					int id = auctionProduct(name, description, categories.toArray(), days, price);
+					// do something with id
+					
 					promptMenu(1);
 					break;
 				case 4:
@@ -706,6 +733,42 @@ public class MyAuction {
 			}
 		} catch(SQLException e) {
 			handleSQLException(e);
+		}
+	}
+	
+	/*
+	 * @param name name of product
+	 * @param description product description
+	 * @param categories array of categories
+	 * @param days number of days of auction
+	 * @param price minimum price of product
+	 * @return auction id of newly created product, or -1 on error
+	 */
+	public int auctionProduct(String name, String description, Object[] categories, int days, int price) {
+		try {
+			CallableStatement cs = connection.prepareCall("begin put_product(?, ?, ?, ?, ?, ?, ?); end;");
+			cs.registerOutParameter(7, Types.INTEGER);
+			cs.setString(1, name);
+			cs.setString(2, description);
+			cs.setArray(3, connection.createArrayOf("VARCHAR2", categories)); // apparently createArrayOf is unsupported in this version of JDBC
+			cs.setInt(4, days);
+			cs.setString(5, username);
+			cs.setInt(6, price);
+			ResultSet result = cs.executeQuery();
+			
+			result.next();
+			return result.getInt(1);
+		} catch (SQLException e) {
+			if (e.getErrorCode() == -20001) {
+				// category is invalid
+				System.out.println("Warning: one or more the categories is invalid.");
+			} else if (e.getErrorCode() == -20002) {
+				// category does not exist
+				System.out.println("Warning: one or more the categories do not exist.");
+			} else {
+				handleSQLException(e);
+			}
+			return -1; // this will probably return -1 even if an warning exception is raised, which is not what we want
 		}
 	}
 	
