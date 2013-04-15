@@ -244,23 +244,32 @@ public class MyAuction {
 				case 1:
 					// Browse products
 					browse();
+					promptMenu(1);
 					break;
 				case 2:
 					// Search products
 					search();
+					promptMenu(1);
 					break;
 				case 3:
 					// Auction product
+					promptMenu(1);
 					break;
 				case 4:
 					// Bid on product
-					place_bid() ;
+					System.out.println("\nPlease provide the following bid information:");
+					int a_id = getUserNumericInput("Auction ID");
+					int bid = getUserNumericInput("Bid Amount");
+					placeBid(a_id, bid);
+					promptMenu(1);
 					break;
 				case 5:
 					// Sell product
+					promptMenu(1);
 					break;
 				case 6:
 					// Show suggestions
+					promptMenu(1);
 					break;
 				default:
 					promptMenu(0);
@@ -615,8 +624,6 @@ public class MyAuction {
 			} else {
 				System.out.println("\nNo results found.");
 			}
-			
-			promptMenu(1);
 		} catch(SQLException e) {
 			handleSQLException(e);
 		}
@@ -657,28 +664,26 @@ public class MyAuction {
 	//Place bid on product currently underauction
 	//I'll finish this up later today once I get back from my meeting I have
 	//Not tested at all
-	public void place_bid() {
-		int a_id, bid ;
-		System.out.println("\nPlease provide the following bid information:");
-		a_id = getUserNumericInput("Auction ID") ;
-		bid = getUserNumericInput("Bid Amount") ;
-		
+	public void placeBid(int a_id, int bid) {
 		try {
 			CallableStatement cs = connection.prepareCall("{? = call validate_bid(?, ?)}") ;
 			cs.registerOutParameter(1, Types.INTEGER) ;
-			cs.setInt(1, a_id) ;
-			cs.setInt(2, bid) ;
-			cs.execute() ;
+			cs.setInt(2, a_id) ;
+			cs.setInt(3, bid) ;
+			cs.execute();
 			int output = cs.getInt(1) ;
 			
-			if(output == 1) {
-				ResultSet resultSet ;
-				resultSet = query("insert into bidlog values(1, " + a_id + ", " + username + ", (select my_time from sys_time), " + bid + ")");
+			if (output == 1) {
+				PreparedStatement s = getPreparedQuery("insert into bidlog values(1, ?, ?, (select my_time from sys_time), ?)");
+				s.setInt(1, a_id);
+				s.setString(2, username);
+				s.setInt(3, bid);
+				s.executeQuery();
+			} else if(output == 2) {
+				System.out.println("Error: Your bid is lower than the current highest bid.");
+			} else {
+				System.out.println("Error: You are placing a bid on an invalid product.") ;
 			}
-			else if(output == 2) 
-				System.out.println("\nError: Your bid is lower than the current highest bid.\n") ;
-			else
-				System.out.println("\nError: You are placing a bid on an invalid product.\n") ;
 		} catch (SQLException e) {
 			handleSQLException(e);
 		}
