@@ -255,6 +255,7 @@ public class MyAuction {
 					break;
 				case 4:
 					// Bid on product
+					place_bid() ;
 					break;
 				case 5:
 					// Sell product
@@ -583,7 +584,7 @@ public class MyAuction {
 			} while(cats != null);
 			
 			// prompt user for sort method
-			int sort = getUserChoice("How do you want your products sorted by?", Arrays.asList(
+			int sort = getUserChoice("\nHow do you want your products sorted by?", Arrays.asList(
 				"Highest bid first",
 				"Lowest bid first",
 				"Alphabetically by product name"
@@ -646,27 +647,23 @@ public class MyAuction {
 	//Place bid on product currently underauction
 	//I'll finish this up later today once I get back from my meeting I have
 	//Not tested at all
-	/*
 	public void place_bid() {
-		String a_id, bid ;
-		System.out.println("Please provide the following bid information:");
+		int a_id, bid ;
+		System.out.println("\nPlease provide the following bid information:");
 		a_id = getUserNumericInput("Auction ID") ;
-		address = getUserNumericInput("Bid Amount") ;
+		bid = getUserNumericInput("Bid Amount") ;
 		
 		try {
-			CallableStatement cs = connection.prepareCall("{call ?:=validate_bid(?, ?)}") ;
+			CallableStatement cs = connection.prepareCall("{? = call validate_bid(?, ?)}") ;
 			cs.registerOutParameter(1, Types.INTEGER) ;
-			cs.registerOutParameter(2, Types.INTEGER) ;
 			cs.setInt(1, a_id) ;
 			cs.setInt(2, bid) ;
 			cs.execute() ;
 			int output = cs.getInt(1) ;
 			
 			if(output == 1) {
-				List<String> params;
-				params = Arrays.asList(a_id, username, bid) ;
-				PreparedStatement statement = getPreparedQuery("insert into bidlog values(1, ?, ?, (select my_time from sys_time), ?)");
-				resultSet = query(statement, params);
+				ResultSet resultSet ;
+				resultSet = query("insert into bidlog values(1, " + a_id + ", " + username + ", (select my_time from sys_time), " + bid + ")");
 			}
 			else if(output == 2) 
 				System.out.println("\nError: Your bid is lower than the current highest bid.\n") ;
@@ -676,7 +673,6 @@ public class MyAuction {
 			handleSQLException(e);
 		}
 	}
-	*/
 	
 	/*
 	 * @param months the number of months to include in query
