@@ -280,6 +280,7 @@ public class MyAuction {
 					break;
 				case 6:
 					// Show suggestions
+					suggest() ;
 					promptMenu(1);
 					break;
 				default:
@@ -592,20 +593,30 @@ public class MyAuction {
 	
 	//Suggesting products for user based on their bidding history.
 	//Work in progress. Just pushing this up now so I can look at browse()
-	/*
 	public void suggest() {
+		try {
 		ResultSet resultSet ;
+		ResultSet resultSet2 ;
 		resultSet = query("select auction_id from ( select friends.bidder, bids.auction_id from" +
 		" ( select distinct bidder from bidlog where auction_id in " +
 		"( select distinct auction_id from bidlog where bidder = '" + username + "' ) )" +
    " friends join bidlog bids on friends.bidder = bids.bidder join product p on bids.auction_id = p.auction_id" +
   " where bids.auction_id not in ( select distinct auction_id from bidlog " +
    " where bidder = '" + username + "') and p.status = 'underauction') group by auction_id order by count(bidder) desc") ;
-		while(resultSet.next()) {
-		
+		if(resultSet != null) 
+		{
+		  while(resultSet.next()) {
+			//resultSet2 = query("select
+		  } 
+		} 
+		else {
+				System.out.println("No suggestions found.");
+		}
+		}
+		catch(SQLException e) {
+			handleSQLException(e);
 		}
 	}
-	*/
 	
 	/*
 	 * Browse through products of a specific category
