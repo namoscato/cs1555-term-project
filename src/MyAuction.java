@@ -698,6 +698,7 @@ public class MyAuction {
 	//Not tested at all
 	public void placeBid(int a_id, int bid) {
 		try {
+			connection.setAutoCommit(false) ;
 			CallableStatement cs = connection.prepareCall("{? = call validate_bid(?, ?)}") ;
 			cs.registerOutParameter(1, Types.INTEGER) ;
 			cs.setInt(2, a_id) ;
@@ -711,11 +712,11 @@ public class MyAuction {
 				s.setString(2, username);
 				s.setInt(3, bid);
 				s.executeQuery();
-			} else if(output == 2) {
-				System.out.println("Error: Your bid is lower than the current highest bid.");
+				System.out.println("\nBid successful!\n") ;
 			} else {
-				System.out.println("Error: You are placing a bid on an invalid product.") ;
+				System.out.println("\nError: Bid is invalid.") ;
 			}
+			connection.setAutoCommit(true) ;
 		} catch (SQLException e) {
 			handleSQLException(e);
 		}
