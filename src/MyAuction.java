@@ -659,16 +659,12 @@ public class MyAuction {
 			String input2 = getUserInput("Enter the second keyword you would like to search by (optional)", false, -1);
 
 			ResultSet resultSet;
-			String temp = "";
-			List<String> params;
-			if (input2.equals("")) {
-				params = Arrays.asList(input);
-			} else {
-				temp = " and upper(description) like upper('%?%')";
-				params = Arrays.asList(input, input2);
-			}
-			PreparedStatement statement = getPreparedQuery("select auction_id, name, description from product where upper(description) like upper('%?%')" + temp);
-			resultSet = query(statement, params);
+			String temp = null ;
+			if (input2.equals("")) 
+				temp = "" ;
+			else
+				temp = " and upper(description) like upper('%" + input2 + "%')";
+			resultSet = query("select auction_id, name, description from product where upper(description) like upper('%" + input + "%')" + temp);
 						
 			System.out.println("\nSearch Results: ") ;
 			if (resultSet != null) {
