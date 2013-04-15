@@ -274,7 +274,7 @@ public class MyAuction {
 					if (login(1)) {
 						promptMenu(2);
 					} else {
-						System.out.println("Error! Invalid username/password!");
+						System.out.println("\nError! Invalid username/password!");
 						promptMenu(0);
 					}
 					break;
@@ -283,7 +283,7 @@ public class MyAuction {
 					if (login(2)) {
 						promptMenu(1);
 					} else {
-						System.out.println("Error! Invalid username/password!");
+						System.out.println("\nError! Invalid username/password!");
 						promptMenu(0);
 					}
 					break;
@@ -557,11 +557,17 @@ public class MyAuction {
 	 */
 	public void updateDate() {
 		String date;
+		boolean exit = false ;
 		do {
-			date = getUserInput("Please enter a date (must match dd-mm-yyyy/hh:mi:ssam)").toUpperCase();
+			date = getUserInput("Please enter a date or 'exit' to exit (must match dd-mm-yyyy/hh:mi:ssam)").toUpperCase();
+			if(date.equals("EXIT")) {
+				exit = true ;
+				break ;
+			}
 		} while(!isDateValid(date));
 		
-		queryUpdate(getPreparedQuery("update sys_time set my_time = to_date(?, 'dd-mm-yyyy/hh:mi:ssam')"), date);
+		if(!exit)
+			queryUpdate(getPreparedQuery("update sys_time set my_time = to_date(?, 'dd-mm-yyyy/hh:mi:ssam')"), date);
 	}
 	
 	//Suggesting products for user based on their bidding history.
