@@ -709,12 +709,19 @@ public class MyAuction {
 		}
 	}
 	
-	//Place bid on product currently underauction
-	//I'll finish this up later today once I get back from my meeting I have
-	//Not tested at all
+	/*
+	 * Places a bid on a particular product if the bid amount is valid
+	 * @param a_id auction id
+	 * @param bid bid amount
+	 */
 	public void placeBid(int a_id, int bid) {
 		try {
-			connection.setAutoCommit(false) ;
+			// turn of auto commit and lock table for inserts
+			connection.setAutoCommit(false);
+			Statement locking = connection.createStatement();
+			locking.execute("lock table bidlog in share row exclusive mode");
+			
+			// check if our bid is valid
 			CallableStatement cs = connection.prepareCall("{? = call validate_bid(?, ?)}") ;
 			cs.registerOutParameter(1, Types.INTEGER) ;
 			cs.setInt(2, a_id) ;
@@ -722,16 +729,20 @@ public class MyAuction {
 			cs.execute();
 			int output = cs.getInt(1) ;
 			
+			// place bid
 			if (output == 1) {
 				PreparedStatement s = getPreparedQuery("insert into bidlog values(1, ?, ?, (select my_time from sys_time), ?)");
 				s.setInt(1, a_id);
 				s.setString(2, username);
 				s.setInt(3, bid);
 				s.executeQuery();
-				System.out.println("\nBid successful!\n") ;
+				System.out.println("\nBid successful!") ;
 			} else {
 				System.out.println("\nError: Bid is invalid.") ;
 			}
+			
+			// commit inserts and unlock table
+			connection.commit();
 			connection.setAutoCommit(true) ;
 		} catch (SQLException e) {
 			handleSQLException(e);

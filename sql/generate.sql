@@ -306,6 +306,7 @@ return int is
   amount int;
   status varchar2(20);
 begin
+  -- do we still need this? should this be set only once for all transactions?
   set transaction isolation level serializable name 'bid' ;
   select amount into amount
   from product
