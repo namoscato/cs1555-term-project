@@ -248,7 +248,18 @@ public class MyAuction {
 					break;
 				case 2:
 					// Search products
-					search();
+					System.out.println("You can search for up to two keywords.");
+					String[] keywords = getUserInput("Please enter your keywords separated by a space").split("\\s");
+					String second;
+					if (keywords.length == 1) {
+						second = null;
+					} else {
+						second = keywords[1];
+						if (keywords.length > 2) {
+							System.out.println("Sorry, you can't search for more than two keywords, but here are the results for '" + keywords[0] + "' and '" + keywords[1] + "':");
+						}
+					}
+					search(keywords[0], second);
 					promptMenu(1);
 					break;
 				case 3:
@@ -645,36 +656,38 @@ public class MyAuction {
 					System.out.printf("%5d %-20s %-30s %10d\n", products.getInt(1), products.getString(2), products.getString(3), products.getInt(4));
 				}
 			} else {
-				System.out.println("\nNo results found.");
+				System.out.println("\nNo products found.");
 			}
 		} catch(SQLException e) {
 			handleSQLException(e);
 		}
 	}
 
-	//Search for products using up to two keywords
-	public void search() {
+	/*
+	 * @param input1 first keyword
+	 * @param input2 second optional keyword
+	 */
+	public void search(String input1, String input2) {
 		try {
-			String input = getUserInput("Please enter the first keyword you would like to search by");
-			String input2 = getUserInput("Enter the second keyword you would like to search by (optional)", false, -1);
-
-			ResultSet resultSet;
-			String temp = null ;
-			if (input2.equals("")) 
-				temp = "" ;
-			else
+			String temp = "";
+			if (input2 != null) {
 				temp = " and upper(description) like upper('%" + input2 + "%')";
-			resultSet = query("select auction_id, name, description from product where upper(description) like upper('%" + input + "%')" + temp);
-						
-			System.out.println("\nSearch Results: ") ;
+			}
+			ResultSet resultSet = query("select auction_id, name, description from product where upper(description) like upper('%" + input1 + "%')" + temp);
+			
 			if (resultSet != null) {
+				// print table heading
+				String[] titles = {"id", "name", "description"};
+				int[] widths = {5, 20, 30};
+				System.out.println(createTableHeading(titles, widths));
+				
+				// print results
 				while(resultSet.next()) {
-					System.out.println("Auction ID: " + resultSet.getInt(1) + ", Product: " + resultSet.getString(2) + ", Description: " + resultSet.getString(3)) ;
+					System.out.printf("%5d %-20s %-30s\n", resultSet.getInt(1), resultSet.getString(2), resultSet.getString(3));
 				}	
 			} else {
-				System.out.println("No products found.");
+				System.out.println("\nNo products found.");
 			}
-			promptMenu(1);
 		} catch(SQLException e) {
 			handleSQLException(e);
 		}
