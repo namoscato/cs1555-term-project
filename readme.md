@@ -1,4 +1,4 @@
-# CS555 Term Project
+# CS1555 Term Project
 
 An electronic auctioning system, similar to `ebay.com` driven by Oracle, Java and JDBC.
 

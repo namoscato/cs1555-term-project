@@ -101,7 +101,7 @@ public class MyAuction {
 	 */
 	public int getUserChoice(String title, List<String> choices, String prompt) {
 		// print choices
-		System.out.println(title + "\n" + HR);
+		System.out.println("\n" + title + "\n" + HR);
 		for (int i = 1; i <= choices.size(); i++) {
 			System.out.println("  " + i + ") " + choices.get(i - 1));
 		}
@@ -131,7 +131,6 @@ public class MyAuction {
 	 * @param menu 0:main, 1:user, 2:admin, 3:admin_stats
 	 */
 	public void promptMenu(int menu) {
-		System.out.println();
 		// print choices
 		List<String> choices = null;
 		int choice = 0;
@@ -577,7 +576,7 @@ public class MyAuction {
 				cats = getCategories(chosenCat);
 				if (cats != null) {
 					String title = (chosenCat == null ? "Categories" : chosenCat);
-					choice = getUserChoice("\n" + title, cats, "Which category would you like to browse?");
+					choice = getUserChoice(title, cats, "Which category would you like to browse?");
 					chosenCat = cats.get(choice - 1);
 				}
 			} while(cats != null);
@@ -588,23 +587,34 @@ public class MyAuction {
 				"Lowest bid first",
 				"Alphabetically by product name"
 			), "Choose a sort option");
-
-			ResultSet resultSet = null ;
-			if(sort == 1)
-				resultSet = query("select auction_id, name, description, amount from product where status = 'underauction' and auction_id in (select auction_id from belongsto where category = '" + chosenCat + "') order by amount desc") ;
-			else if(sort == 2)
-				resultSet = query("select auction_id, name, description, amount from product where status = 'underauction' and auction_id in (select auction_id from belongsto where category = '" + chosenCat + "') order by amount asc") ;
-			else if(sort == 3)
-				resultSet = query("select auction_id, name, description, amount from product where status = 'underauction' and auction_id in (select auction_id from belongsto where category = '" + chosenCat + "') order by name asc") ;
-			else
-				System.out.println("Error: Please enter a valid number.") ;
 			
-			System.out.println("\nSearch Results: ") ;
-			while(resultSet.next()) {
-				System.out.println("Auction ID: " + resultSet.getInt(1) + ", Product: " + resultSet.getString(2)
-						+ ", Description: " + resultSet.getString(3) + ", Highest Bid: " + resultSet.getInt(4)) ;
+			// construct query string
+			String query = "select auction_id, name, description, amount from product where status = 'underauction' and auction_id in (select auction_id from belongsto where category = '" + chosenCat + "') order by ";
+			if (sort == 1) {
+				query += "amount desc";
+			} else if (sort == 2) {
+				query += "amount asc";
+			} else {
+				query += "name asc";
 			}
-		
+			
+			// run query
+			ResultSet products = query(query);
+			
+			if (products != null) {
+				// print table heading
+				String[] titles = {"id", "name", "description", "highest bid"};
+				int[] widths = {5, 20, 30, 10};
+				System.out.println(createTableHeading(titles, widths));
+				
+				// print results
+				while (products.next()) {
+					System.out.printf("%5d %-20s %-30s %10d\n", products.getInt(1), products.getString(2), products.getString(3), products.getInt(4));
+				}
+			} else {
+				System.out.println("\nNo results found.");
+			}
+			
 			promptMenu(1);
 		} catch(SQLException e) {
 			handleSQLException(e);
