@@ -605,9 +605,14 @@ public class MyAuction {
    " where bidder = '" + username + "') and p.status = 'underauction') group by auction_id order by count(bidder) desc") ;
 		if(resultSet != null) 
 		{
-		  while(resultSet.next()) {
-			//resultSet2 = query("select
-		  } 
+			//copying table format from search
+		    String[] titles = {"id", "name", "description"};
+			int[] widths = {5, 20, 30};
+			System.out.println(createTableHeading(titles, widths));
+		    while(resultSet.next()) {
+				resultSet2 = query("select auction_id, name, description from product where auction_id = " + resultSet.getInt(1)) ;
+				System.out.printf("%5d %-20s %-30s\n", resultSet.getInt(1), resultSet.getString(2), resultSet.getString(3));
+		    } 
 		} 
 		else {
 				System.out.println("No suggestions found.");
