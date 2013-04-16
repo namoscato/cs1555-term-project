@@ -307,6 +307,7 @@ public class MyAuction {
 					break;
 				case 5:
 					// Sell product
+					sellProduct() ;
 					promptMenu(1);
 					break;
 				case 6:
@@ -731,6 +732,41 @@ public class MyAuction {
 		}
 	}
 
+	public void sellProduct() {
+		try {
+		ResultSet resultSet = null, resultSet2 = null, resultSet3 = null ;
+		resultSet = query("select auction_id from product where seller = '" + username + "' and status = 'close'");
+		if(resultSet) {
+			resultSet2 = query("select amount2 from product where auction_id = " + resultSet.getInt(1)) ;
+			if(resultSet2.getInt(1) == 0) {
+				System.out.println("Sorry, no bids were placed on your product.") ;
+			}
+			else
+			{
+				boolean selection = false ;
+				do {
+					int answer = getUserNumericInput("\nThe 2nd highest bid for you product was $" + resultSet2.getInt(1) + "\nDo you want to 1. Sell it, or\n 2. Withdraw it?\n") ;
+					if(answer == 1 || answer == 2)
+						selection = true ;
+				} while(!selection) ;
+				if(answer == 1) { //selling product
+					resultSet3 = query("update product set status = 'sold', buyer = (select bidder from bidlog where auction_id = " 
+					+ resultSet.getInt(1) + " and rownum <= 1 order by bid_time desc), sell_date = "
+					+ "(select my_time from sys_time), amount = (select amount2 from product where auction_id = " 
+					+ resultSet.getInt(1) + ") where auction_id = " + resultSet.getInt(1) ;
+				}
+				else { //withdrawing
+					resultSet3 = query("update product set status = 'withdrawn'  where auction_id = " + resultSet.getInt(1) ;
+				}
+			}
+		}
+		else
+			System.out.println("\nYou don't have any ended auctions.\n") ;
+		} catch(SQLException e) {
+			handleSQLException(e);
+		}
+	}
+	
 	/*
 	 * @param input1 first keyword
 	 * @param input2 second optional keyword
