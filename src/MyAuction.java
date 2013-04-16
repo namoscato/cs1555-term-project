@@ -57,6 +57,26 @@ public class MyAuction {
 	
 	/*
 	 * @param prompt descriptive prompt of input
+	 * @param whether or not input is required
+	 * @return numeric input
+	 */
+	public int getUserNumericInput(String prompt, boolean required) {
+		while (true) {
+			try {
+				String input = getUserInput(prompt, -1, required);
+				if (!required && input.isEmpty()) {
+					return 0;
+				} else {
+					return Integer.parseInt(input);
+				}
+			} catch (NumberFormatException e) {
+				continue;
+			}	
+		}
+	}
+	
+	/*
+	 * @param prompt descriptive prompt of input
 	 * @return trimmed line of required user input
 	 */
 	public String getUserInput(String prompt) {
@@ -290,7 +310,7 @@ public class MyAuction {
 					}
 					
 					int days = getUserNumericInput("Number of days for auction");
-					int price = getUserNumericInput("Minimum starting price");
+					int price = getUserNumericInput("Minimum starting price (optional)", false); // default is 0 
 					
 					int id = auctionProduct(name, description, categories.toArray(), days, price);
 					// do something with id
@@ -759,8 +779,9 @@ public class MyAuction {
 			result.next();
 			int bids = result.getInt(1);
 			if (bids == 0) {
-				System.out.println("\nSorry, no bids were placed on your product with Auction ID of " + auctionID + ".");
-				// should we automatically withdraw?
+				// withdraw auction if there are no bids
+				query("update product set status = 'withdrawn' where auction_id = " + auctionID);
+				System.out.println("\nSorry, no bids were placed on your product with Auction ID of " + auctionID + ". This auction has now been withdrawn.");
 			} else {
 				// get second highest bidding price (or highest if only one bidder)
 				String attr = (bids == 1 ? "amount" : "amount2");
@@ -1029,7 +1050,7 @@ public class MyAuction {
 	public void productStatistics(String customer) {
 		try {
 			String query = "select name, status, amount as highest_bid, login, seller from (" +
-				"select p.name, p.status, p.amount, b.bidder as login, p.seller from product p join bidlog b on p.auction_id = b.auction_id and p.amount = b.amount where p.status <> 'sold' " +
+				"select p.name, p.status, p.amount, b.bidder as login, p.seller from product p join bidlog b on p.auction_id = b.auction_id and p.amount = b.amount where p.status = 'underauction' " +
 				"union select name, status, amount, buyer as login, seller from product where status = 'sold')";
 			ResultSet result;
 			if (customer.isEmpty()) {
