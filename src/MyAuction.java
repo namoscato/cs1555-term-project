@@ -759,7 +759,7 @@ public class MyAuction {
 			result.next();
 			int bids = result.getInt(1);
 			if (bids == 0) {
-				System.out.println("Sorry, no bids were placed on your product.");
+				System.out.println("\nSorry, no bids were placed on your product with Auction ID of " + auctionID + ".");
 				// should we automatically withdraw?
 			} else {
 				// get second highest bidding price (or highest if only one bidder)
