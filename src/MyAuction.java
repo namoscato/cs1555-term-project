@@ -734,6 +734,9 @@ public class MyAuction {
 					resultSet3 = query("update product set status = 'withdrawn'  where auction_id = " + resultSet.getInt(1) ;
 				}
 			}
+		}
+		else
+			System.out.println("\nYou don't have any ended auctions.\n") ;
 		} catch(SQLException e) {
 			handleSQLException(e);
 		}
