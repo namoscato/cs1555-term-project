@@ -307,12 +307,28 @@ public class MyAuction {
 					break;
 				case 5:
 					// Sell product
-					sellProduct() ;
+					try {
+						ResultSet myProducts = query("select auction_id, name from product where seller = '" + username + "' and status = 'closed'");
+						if (myProducts != null) {
+							List<Integer> ids = new ArrayList<Integer>();
+							List<String> products = new ArrayList<String>();
+							while (myProducts.next()) {
+								ids.add(myProducts.getInt(1));
+								products.add(myProducts.getString(2) + " (#" + myProducts.getInt(1) + ")");
+							}
+							int userChoice = getUserChoice("Your closed auctions", products, "Please enter the product you would like to sell");
+							sellProduct(ids.get(userChoice - 1));
+						} else {
+							System.out.println("You currently do not have any closed auctions.");
+						}
+					} catch (SQLException e) {
+						handleSQLException(e);
+					}
 					promptMenu(1);
 					break;
 				case 6:
 					// Show suggestions
-					suggest() ;
+					suggest();
 					promptMenu(1);
 					break;
 				default:
@@ -731,37 +747,46 @@ public class MyAuction {
 			handleSQLException(e);
 		}
 	}
-
-	public void sellProduct() {
+	
+	/*
+	 * Sells or withdraws a closed product given that there were bids on it.
+	 * @param auctionID auction ID for product
+	 */
+	public void sellProduct(int auctionID) {
 		try {
-		ResultSet resultSet = null, resultSet2 = null, resultSet3 = null ;
-		resultSet = query("select auction_id from product where seller = '" + username + "' and status = 'close'");
-		if(resultSet) {
-			resultSet2 = query("select amount2 from product where auction_id = " + resultSet.getInt(1)) ;
-			if(resultSet2.getInt(1) == 0) {
-				System.out.println("Sorry, no bids were placed on your product.") ;
-			}
-			else
-			{
-				boolean selection = false ;
-				do {
-					int answer = getUserNumericInput("\nThe 2nd highest bid for you product was $" + resultSet2.getInt(1) + "\nDo you want to 1. Sell it, or\n 2. Withdraw it?\n") ;
-					if(answer == 1 || answer == 2)
-						selection = true ;
-				} while(!selection) ;
-				if(answer == 1) { //selling product
-					resultSet3 = query("update product set status = 'sold', buyer = (select bidder from bidlog where auction_id = " 
-					+ resultSet.getInt(1) + " and rownum <= 1 order by bid_time desc), sell_date = "
-					+ "(select my_time from sys_time), amount = (select amount2 from product where auction_id = " 
-					+ resultSet.getInt(1) + ") where auction_id = " + resultSet.getInt(1) ;
+			//ResultSet resultSet = null, resultSet2 = null, resultSet3 = null ;
+			ResultSet result = query("select count(bidsn) as bids from bidlog where auction_id = " + auctionID);
+			result.next();
+			int bids = result.getInt(1);
+			if (bids == 0) {
+				System.out.println("Sorry, no bids were placed on your product.");
+				// should we automatically withdraw?
+			} else {
+				// get second highest bidding price (or highest if only one bidder)
+				String attr = (bids == 1 ? "amount" : "amount2");
+				result = query("select " + attr + " from product where auction_id = " + auctionID);
+				result.next();
+				int price = result.getInt(1);
+				
+				int answer = getUserChoice("Do you want to sell your product for $" + price + "?", Arrays.asList(
+					"Sell product",
+					"Withdraw product"
+				), "Choose an option");
+				
+				if (answer == 1) {
+					// sell product
+					// if we only have one bidder, don't update the amount attr because amount2 is 0
+					String addition = (bids == 1 ? "" : ", amount = (select amount2 from product where auction_id = 1)");
+					query("update product set status = 'sold', buyer = (select * from (select bidder from bidlog " +
+						"where auction_id = " + auctionID + "order by bid_time desc) where rownum <= 1), sell_date = (" +
+						"select my_time from sys_time)" + addition + " where auction_id = " + auctionID);
+					System.out.println("\nSold product " + auctionID + " for $" + price + "!");
+				} else {
+					// withdraw
+					query("update product set status = 'withdrawn' where auction_id = " + auctionID);
+					System.out.println("\nWithdrew product " + auctionID + ".");
 				}
-				else { //withdrawing
-					resultSet3 = query("update product set status = 'withdrawn'  where auction_id = " + resultSet.getInt(1) ;
-				}
 			}
-		}
-		else
-			System.out.println("\nYou don't have any ended auctions.\n") ;
 		} catch(SQLException e) {
 			handleSQLException(e);
 		}
@@ -824,6 +849,7 @@ public class MyAuction {
 			return result.getInt(1);
 		} catch (SQLException e) {
 			handleSQLException(e);
+			return -1;
 		}
 	}
 	

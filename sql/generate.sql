@@ -347,14 +347,17 @@ end ;
 ---- (1) sell the product
 select count(bidsn) as bids from bidlog where auction_id = 1;
 -- if bids > 1:
-  update product
-  set status = 'sold', buyer = (
+update product
+set status = 'sold', buyer = (
+  select * from (
     select bidder
     from bidlog
-    where auction_id = 1 and rownum <= 1
+    where auction_id = 1
     order by bid_time desc
-  ), sell_date = (select my_time from sys_time), amount = (select amount2 from product where auction_id = 1)
-  where auction_id = 1;
+  ) where rownum <= 1
+), sell_date = (select my_time from sys_time), amount = (select amount2 from product where auction_id = 1)
+where auction_id = 1;
+-- if bids == 1, then don't update amount attr
 
 ---- (2) withdraw the auction
 update product
