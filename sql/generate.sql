@@ -204,7 +204,7 @@ from product where upper(description) like upper('%dell%') and upper(description
 
 -- (c) Putting products for auction
 
-create or replace type vcarray as varray(20) of varchar2(20);
+create or replace type vcarray as table of varchar2(20);
 /
 
 -- check if category is valid:
@@ -222,7 +222,6 @@ create or replace procedure put_product (
   min_price in int,
   id out int
 ) is
-  i number;
   start_date date;
 begin
   select my_time into start_date
@@ -232,11 +231,8 @@ begin
 
   -- add categories to product
   -- assume categories are valid (checked in Java)
-  i := categories.FIRST;
-  loop
-    exit when i is null;
+  for i in 1..categories.count loop
     insert into belongsto values(id, categories(i));
-    i := categories.NEXT(i);
   end loop;
 
   return;

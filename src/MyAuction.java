@@ -313,7 +313,7 @@ public class MyAuction {
 					int price = getUserNumericInput("Minimum starting price (optional)", false); // default is 0 
 					
 					int id = auctionProduct(name, description, categories.toArray(), days, price);
-					// do something with id
+					System.out.println("\nAn auction for '" + name + "' has been created with Auction ID = " + id + "!");
 					
 					promptMenu(1);
 					break;
@@ -858,16 +858,16 @@ public class MyAuction {
 			cs.setString(1, name);
 			cs.setString(2, description);
 			
-			// this still isn't working in here...
-			ArrayDescriptor desc = ArrayDescriptor.createDescriptor("vcarray", connection);
+			// create an array of valid categories
+			ArrayDescriptor desc = ArrayDescriptor.createDescriptor("VCARRAY", connection);
 			cs.setArray(3, new ARRAY(desc, connection, categories));
+			
 			cs.setInt(4, days);
 			cs.setString(5, username);
 			cs.setInt(6, price);
-			ResultSet result = cs.executeQuery();
+			cs.execute();
 			
-			result.next();
-			return result.getInt(1);
+			return cs.getInt(7);
 		} catch (SQLException e) {
 			handleSQLException(e);
 			return -1;
