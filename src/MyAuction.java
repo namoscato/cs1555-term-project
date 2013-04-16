@@ -1,5 +1,6 @@
 import java.io.File;
 import java.io.FileNotFoundException;
+import oracle.sql.*;
 import java.sql.*;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -270,19 +271,22 @@ public class MyAuction {
 					String name = getUserInput("Product name", 20);
 					String description = getUserInput("Description (optional)", 30, false);
 					
-					// add categories
-					List<String> categories = new ArrayList<String>();
-					Pattern regex = Pattern.compile("[^\\s\"']+|\"([^\"]*)\"");
-					Matcher matcher = regex.matcher(getUserInput("Categories (separated by space and surrounded by \"s)", -1));
-					while (matcher.find()) {
-						// check if category is valid? or just do that in SQL?
-					    if (matcher.group(1) != null) {
-					        // add quoted phrase without the quotes
-					    	categories.add(matcher.group(1));
-					    } else {
-					        // add unquoted word
-					    	categories.add(matcher.group());
+					// add valid categories
+					String temp = getUserInput("Categories (separated by a comma)", -1);
+					List<String> cats = Arrays.asList(temp.trim().split("\\s*,\\s*"));
+					List<String> categories = new ArrayList<String>(cats);
+					List<String> errors = new ArrayList<String>();
+					for (String cat : cats) {
+					    if (!isLeafCategory(cat)) {
+					    	categories.remove(cat);
+					    	errors.add(cat);
 					    }
+					}
+					int errorCount = errors.size();
+					if (errorCount == 1) {
+						System.out.println("Sorry, the category '" + errors.get(0) + "' is invalid");
+					} else if (errorCount > 1) {
+						System.out.println("Sorry, the " + errorCount + " categories (" + formatList(errors, '\0', ", ") + ") are invalid.");
 					}
 					
 					int days = getUserNumericInput("Number of days for auction");
@@ -471,6 +475,27 @@ public class MyAuction {
 			return false ; //If there was no match for the username/password, return false
 
 		} catch(SQLException e) {
+			handleSQLException(e);
+			return false;
+		}
+	}
+	
+	/*
+	 * @param category name of category
+	 * @return whether or not category exists
+	 */
+	public boolean isLeafCategory(String category) {
+		try {
+			PreparedStatement s = getPreparedQuery("select count(name) from category where name = ? or parent_category = ?");
+			ResultSet r = query(s, Arrays.asList(category, category));
+			r.next();
+			
+			if (r.getInt(1) == 1) {
+				return true;
+			} else {
+				return false;
+			}
+		} catch (SQLException e) {
 			handleSQLException(e);
 			return false;
 		}
@@ -750,7 +775,10 @@ public class MyAuction {
 			cs.registerOutParameter(7, Types.INTEGER);
 			cs.setString(1, name);
 			cs.setString(2, description);
-			cs.setArray(3, connection.createArrayOf("VARCHAR2", categories)); // apparently createArrayOf is unsupported in this version of JDBC
+			
+			// this still isn't working in here...
+			ArrayDescriptor desc = ArrayDescriptor.createDescriptor("vcarray", connection);
+			cs.setArray(3, new ARRAY(desc, connection, categories));
 			cs.setInt(4, days);
 			cs.setString(5, username);
 			cs.setInt(6, price);
@@ -759,16 +787,7 @@ public class MyAuction {
 			result.next();
 			return result.getInt(1);
 		} catch (SQLException e) {
-			if (e.getErrorCode() == -20001) {
-				// category is invalid
-				System.out.println("Warning: one or more the categories is invalid.");
-			} else if (e.getErrorCode() == -20002) {
-				// category does not exist
-				System.out.println("Warning: one or more the categories do not exist.");
-			} else {
-				handleSQLException(e);
-			}
-			return -1; // this will probably return -1 even if an warning exception is raised, which is not what we want
+			handleSQLException(e);
 		}
 	}
 	

@@ -207,6 +207,12 @@ from product where upper(description) like upper('%dell%') and upper(description
 create or replace type vcarray as varray(20) of varchar2(20);
 /
 
+-- check if category is valid:
+-- select count(name) from category where name = ? or parent_category = ?
+-- if count(name) == 1, it is a leaf
+-- if count(name) == 0, category doesn't exist
+-- if count(name) > 1, category exists, but it is not a leaf
+
 create or replace procedure put_product (
   name in varchar2,
   description in varchar2,
@@ -217,35 +223,15 @@ create or replace procedure put_product (
   id out int
 ) is
   i number;
-  temp number;
   start_date date;
-  invalid_cat exception;
-  cat_no_exist exception;
 begin
   select my_time into start_date
   from sys_time;
 
-  -- do we need to surround this with a transaction?
-  i := categories.FIRST;
-  loop
-    exit when i is null;
-    -- check to see if category exists
-    select count(name) into temp from category where name = categories(i);
-    if (temp != 1)
-      then raise cat_no_exist;
-    else
-      -- check to see if category is valid
-      select count(name) into temp from category where parent_category = categories(i);
-      if (temp > 0) 
-        then raise invalid_cat;
-      end if;
-    end if;
-    i := categories.NEXT(i);
-  end loop;
-
   insert into product values(1, name, description, seller, start_date, min_price, days, 'underauction', null, null, null, null) returning auction_id into id;
 
   -- add categories to product
+  -- assume categories are valid (checked in Java)
   i := categories.FIRST;
   loop
     exit when i is null;
@@ -254,9 +240,6 @@ begin
   end loop;
 
   return;
-exception
-  when invalid_cat then raise_application_error(-20001, 'category is invalid');
-  when cat_no_exist then raise_application_error(-20002, 'category does not exist');
 end;
 /
 
