@@ -364,7 +364,7 @@ where auction_id = 1;
 --(f) Suggestions
 -- find suggestions for 'user2'
 
-select auction_id from (
+select product.auction_id, product.name, product.description, product.amount from (
   select friends.bidder, bids.auction_id from (
     -- find user's friends
     select distinct bidder
@@ -389,7 +389,9 @@ select auction_id from (
     from bidlog
     where bidder = 'user2'
   ) and p.status = 'underauction'
-) group by auction_id order by count(bidder) desc;
+) t1 join product on t1.auction_id = product.auction_id
+group by product.auction_id, product.name, product.description, product.amount
+order by count(bidder) desc;
 
 
 -- ### 3. Administrator Interface

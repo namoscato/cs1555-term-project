@@ -680,34 +680,34 @@ public class MyAuction {
 			queryUpdate(getPreparedQuery("update sys_time set my_time = to_date(?, 'dd-mm-yyyy/hh:mi:ssam')"), date);
 	}
 	
-	//Suggesting products for user based on their bidding history.
-	//Work in progress. Just pushing this up now so I can look at browse()
+	/*
+	 * Prints a list of suggested products to the user if any exist.
+	 */
 	public void suggest() {
 		try {
-		ResultSet resultSet ;
-		ResultSet resultSet2 ;
-		resultSet = query("select auction_id from ( select friends.bidder, bids.auction_id from" +
-		" ( select distinct bidder from bidlog where auction_id in " +
-		"( select distinct auction_id from bidlog where bidder = '" + username + "' ) )" +
-   " friends join bidlog bids on friends.bidder = bids.bidder join product p on bids.auction_id = p.auction_id" +
-  " where bids.auction_id not in ( select distinct auction_id from bidlog " +
-   " where bidder = '" + username + "') and p.status = 'underauction') group by auction_id order by count(bidder) desc") ;
-		if(resultSet != null) 
-		{
-			//copying table format from search
-		    String[] titles = {"id", "name", "description"};
-			int[] widths = {5, 20, 30};
-			System.out.println(createTableHeading(titles, widths));
-		    while(resultSet.next()) {
-				resultSet2 = query("select auction_id, name, description from product where auction_id = " + resultSet.getInt(1)) ;
-				System.out.printf("%5d %-20s %-30s\n", resultSet.getInt(1), resultSet.getString(2), resultSet.getString(3));
-		    } 
-		} 
-		else {
+			ResultSet suggestions = query("select product.auction_id, product.name, product.description, product.amount from (" +
+				"select friends.bidder, bids.auction_id from (select distinct bidder from bidlog b1 where not exists (" +
+				"select auction_id from (select distinct auction_id from bidlog where bidder = '" + username + "') b2 where not exists (" +
+				"select distinct bidder, auction_id from bidlog b3 where b1.bidder = b3.bidder and b2.auction_id = b3.auction_id) " +
+				") and bidder <> '" + username + "') friends join bidlog bids on friends.bidder = bids.bidder join product p on bids.auction_id = p.auction_id " +
+				"where bids.auction_id not in (select distinct auction_id from bidlog where bidder = '" + username + "') and p.status = 'underauction' " +
+				") t1 join product on t1.auction_id = product.auction_id group by product.auction_id, product.name, product.description, product.amount " +
+				"order by count(bidder) desc");
+			
+			if(suggestions != null) {
+				// print table heading
+				String[] titles = {"id", "name", "description", "highest bid"};
+				int[] widths = {5, 20, 30, 10};
+				System.out.println(createTableHeading(titles, widths));
+				
+				// print results
+				while (suggestions.next()) {
+					System.out.printf("%5d %-20s %-30s %10d\n", suggestions.getInt(1), suggestions.getString(2), suggestions.getString(3), suggestions.getInt(4));
+				}
+			} else {
 				System.out.println("No suggestions found.");
-		}
-		}
-		catch(SQLException e) {
+			}
+		} catch(SQLException e) {
 			handleSQLException(e);
 		}
 	}
