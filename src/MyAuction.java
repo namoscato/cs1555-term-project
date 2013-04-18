@@ -361,6 +361,7 @@ public class MyAuction {
 				case 1:
 					// administrator login
 					if (login(1)) {
+						System.out.println("\nWelcome, " + username + "!");
 						promptMenu(2);
 					} else {
 						System.out.println("\nError! Invalid username/password!");
@@ -370,6 +371,7 @@ public class MyAuction {
 				case 2:	
 					// user login
 					if (login(2)) {
+						System.out.println("\nWelcome, " + username + "!");
 						promptMenu(1);
 					} else {
 						System.out.println("\nError! Invalid username/password!");
@@ -509,6 +511,7 @@ public class MyAuction {
 				if(username.equals(resultSet.getString(1)) && password.equals(resultSet.getString(2)))
 					return true ; //Username/password combo was found!
 			}
+			
 			return false ; //If there was no match for the username/password, return false
 
 		} catch(SQLException e) {
