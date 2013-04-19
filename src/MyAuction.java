@@ -526,6 +526,7 @@ public class MyAuction {
 	 */
 	public boolean isLeafCategory(String category) {
 		try {
+			category = category.substring(0, 1).toUpperCase() + category.substring(1) ;
 			PreparedStatement s = getPreparedQuery("select count(name) from category where name = ? or parent_category = ?");
 			ResultSet r = query(s, Arrays.asList(category, category));
 			r.next();
