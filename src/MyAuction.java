@@ -925,29 +925,27 @@ public class MyAuction {
 	 */
 	public void topLeafCategories(int months, int k) {
 		try {
-			Map<String, Integer> map = new HashMap<String, Integer>();
-			List<String> cats = getLeafCategories();
+			PreparedStatement s = getPreparedQuery("select c1.name, product_count(?, c1.name) as count from category c1 " +
+				"where not exists (select name from category c2 where c2.parent_category = c1.name) and product_count(?, c1.name) > 0 " +
+				"order by product_count(?, c1.name) desc");
+			s.setInt(1, months);
+			s.setInt(2, months);
+			s.setInt(3, months);
 			
-			CallableStatement cs = connection.prepareCall("{call ?:=product_count(?, ?)}");
-			for (String cat : cats) {
-				cs.registerOutParameter(1, Types.INTEGER);
-				cs.setInt(2, months);
-				cs.setString(3, cat);
-				cs.execute();
-				map.put(cat, cs.getInt(1));
-			}
+			ResultSet resultSet = s.executeQuery();
 			
-			// sort map
-			ValueComparator vc = new ValueComparator(map);
-			Map<String, Integer> sorted = new TreeMap<String, Integer>(vc);
-			sorted.putAll(map);
-			
-			System.out.println(HR);
-			int count = 0;
-			for (Map.Entry<String, Integer> cat : sorted.entrySet()) {
-				System.out.println(cat.getValue() + "\t" + cat.getKey());
-				count++;
-				if (count == k) break;
+			if (resultSet != null) {
+				// print table heading
+				String[] titles = {"count", "category"};
+				int[] widths = {5, 20};
+				System.out.println(createTableHeading(titles, widths));
+				
+				// print results
+				while(resultSet.next()) {
+					System.out.printf("%5d %-20s\n", resultSet.getInt(2), resultSet.getString(1));
+				}
+			} else {
+				System.out.println("Sorry, no products are categorized.");
 			}
 		} catch (SQLException e) {
 			handleSQLException(e);
@@ -984,10 +982,16 @@ public class MyAuction {
 			Map<String, Integer> sorted = new TreeMap<String, Integer>(vc);
 			sorted.putAll(map);
 			
-			System.out.println(HR);
+			// print table heading
+			String[] titles = {"count", "category"};
+			int[] widths = {5, 20};
+			System.out.println(createTableHeading(titles, widths));
+			
+			// print results
 			int count = 0;
 			for (Map.Entry<String, Integer> cat : sorted.entrySet()) {
-				System.out.println(cat.getValue() + "\t" + cat.getKey());
+				if (cat.getValue() == 0) break;
+				System.out.printf("%5d %-20s\n", cat.getValue(), cat.getKey());
 				count++;
 				if (count == k) break;
 			}

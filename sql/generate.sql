@@ -482,8 +482,15 @@ end;
 
 -- i. the top k highest volume categories (highest count of products sold), here we only
 --    care categories that do not contain any other subcategories (i.e, leaf nodes in the category hierarchy).
--- recursively implemented in java using
--- select name from category where parent_category = parent
+-- assume months = 12
+select c1.name, product_count(12, c1.name) as count
+from category c1
+where not exists (
+  select name
+  from category c2
+  where c2.parent_category = c1.name
+) and product_count(12, c1.name) > 0
+order by product_count(12, c1.name) desc;
 
 -- ii. the top k highest volume categories (highest count of products sold), we only care categories
 --     that do not belong to any other category (root nodes in the category hierarchy).
