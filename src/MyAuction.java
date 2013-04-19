@@ -293,6 +293,7 @@ public class MyAuction {
 					
 					// add valid categories
 					String temp = getUserInput("Categories (separated by a comma)", -1);
+					temp = temp.substring(0, 1).toUpperCase() + temp.substring(1) ;
 					List<String> cats = Arrays.asList(temp.trim().split("\\s*,\\s*"));
 					List<String> categories = new ArrayList<String>(cats);
 					List<String> errors = new ArrayList<String>();
