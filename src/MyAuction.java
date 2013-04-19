@@ -977,23 +977,27 @@ public class MyAuction {
 				map.put(root, result.getInt(1));
 			}
 			
-			// sort map
-			ValueComparator vc = new ValueComparator(map);
-			Map<String, Integer> sorted = new TreeMap<String, Integer>(vc);
-			sorted.putAll(map);
-			
-			// print table heading
-			String[] titles = {"count", "category"};
-			int[] widths = {5, 20};
-			System.out.println(createTableHeading(titles, widths));
-			
-			// print results
-			int count = 0;
-			for (Map.Entry<String, Integer> cat : sorted.entrySet()) {
-				if (cat.getValue() == 0) break;
-				System.out.printf("%5d %-20s\n", cat.getValue(), cat.getKey());
-				count++;
-				if (count == k) break;
+			if (!map.isEmpty()) {
+				// sort map
+				ValueComparator vc = new ValueComparator(map);
+				Map<String, Integer> sorted = new TreeMap<String, Integer>(vc);
+				sorted.putAll(map);
+				
+				// print table heading
+				String[] titles = {"count", "category"};
+				int[] widths = {5, 20};
+				System.out.println(createTableHeading(titles, widths));
+				
+				// print results
+				int count = 0;
+				for (Map.Entry<String, Integer> cat : sorted.entrySet()) {
+					if (cat.getValue() == 0) break;
+					System.out.printf("%5d %-20s\n", cat.getValue(), cat.getKey());
+					count++;
+					if (count == k) break;
+				}
+			} else {
+				System.out.println("Sorry, no products are categorized.");
 			}
 		} catch (SQLException e) {
 			handleSQLException(e);
