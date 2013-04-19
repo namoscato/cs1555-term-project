@@ -788,8 +788,9 @@ public class MyAuction {
 				System.out.println("\nSorry, no bids were placed on your product with Auction ID of " + auctionID + ". This auction has now been withdrawn.");
 			} else {
 				// get second highest bidding price (or highest if only one bidder)
-				String attr = (bids == 1 ? "amount" : "amount2");
-				result = query("select " + attr + " from product where auction_id = " + auctionID);
+				int num = (bids == 1 ? 1 : 2);
+				result = query("select amount from (select amount, rownum as rn from (select amount from bidlog where auction_id = " + auctionID + " " +
+					"order by bid_time desc) where rownum <= 2) where rn = " + num);
 				result.next();
 				int price = result.getInt(1);
 				
@@ -800,11 +801,8 @@ public class MyAuction {
 				
 				if (answer == 1) {
 					// sell product
-					// if we only have one bidder, don't update the amount attr because amount2 is 0
-					String addition = (bids == 1 ? "" : ", amount = (select amount2 from product where auction_id = 1)");
-					query("update product set status = 'sold', buyer = (select * from (select bidder from bidlog " +
-						"where auction_id = " + auctionID + "order by bid_time desc) where rownum <= 1), sell_date = (" +
-						"select my_time from sys_time)" + addition + " where auction_id = " + auctionID);
+					query("update product set status = 'sold', buyer = (select * from (select bidder from bidlog where auction_id = " + auctionID + " " +
+						"order by bid_time desc) where rownum <= 1), sell_date = (select my_time from sys_time), amount = " + price + " where auction_id = " + auctionID);
 					System.out.println("\nSold product " + auctionID + " for $" + price + "!");
 				} else {
 					// withdraw
