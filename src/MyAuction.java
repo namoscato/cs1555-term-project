@@ -681,8 +681,10 @@ public class MyAuction {
 			}
 		} while(!isDateValid(date));
 		
-		if(!exit)
+		if(!exit) {
 			queryUpdate(getPreparedQuery("update sys_time set my_time = to_date(?, 'dd-mm-yyyy/hh:mi:ssam')"), date);
+			System.out.println("\nDate successfully changed!\n") ;
+		}
 	}
 	
 	/*
