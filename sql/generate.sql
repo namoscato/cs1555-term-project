@@ -362,7 +362,7 @@ where auction_id = 1;
 
 
 --(f) Suggestions
--- find suggestions for 'user2'
+-- find suggestions for 'user0'
 
 select product.auction_id, product.name, product.description, product.amount from (
   select friends.bidder, bids.auction_id from (
@@ -372,22 +372,25 @@ select product.auction_id, product.name, product.description, product.amount fro
     where not exists (
       -- select auction_ids that bidder didn't bid on
       -- this should be empty; otherwise, bidder is not a friend
-      select auction_id from (
-        select distinct auction_id
-        from bidlog
-        where bidder = 'user2'
-      ) b2 where not exists (
+      select distinct auction_id
+      from bidlog b2
+      where bidder = 'user0' and not exists (
         select distinct bidder, auction_id
         from bidlog b3
         where b1.bidder = b3.bidder and b2.auction_id = b3.auction_id
       )
-    ) and bidder <> 'user2'
+    ) and bidder <> 'user0' and (
+      -- take care of special case in which user has not bid on anything
+      select count(auction_id)
+      from bidlog
+      where bidder = 'user0'
+    ) > 0
   ) friends join bidlog bids on friends.bidder = bids.bidder join product p on bids.auction_id = p.auction_id
   -- assuming we don't want to include products user has already bid on
   where bids.auction_id not in (
     select distinct auction_id
     from bidlog
-    where bidder = 'user2'
+    where bidder = 'user0'
   ) and p.status = 'underauction'
 ) t1 join product on t1.auction_id = product.auction_id
 group by product.auction_id, product.name, product.description, product.amount

@@ -690,12 +690,12 @@ public class MyAuction {
 		try {
 			ResultSet suggestions = query("select product.auction_id, product.name, product.description, product.amount from (" +
 				"select friends.bidder, bids.auction_id from (select distinct bidder from bidlog b1 where not exists (" +
-				"select auction_id from (select distinct auction_id from bidlog where bidder = '" + username + "') b2 where not exists (" +
-				"select distinct bidder, auction_id from bidlog b3 where b1.bidder = b3.bidder and b2.auction_id = b3.auction_id) " +
-				") and bidder <> '" + username + "') friends join bidlog bids on friends.bidder = bids.bidder join product p on bids.auction_id = p.auction_id " +
-				"where bids.auction_id not in (select distinct auction_id from bidlog where bidder = '" + username + "') and p.status = 'underauction' " +
-				") t1 join product on t1.auction_id = product.auction_id group by product.auction_id, product.name, product.description, product.amount " +
-				"order by count(bidder) desc");
+				"select distinct auction_id from bidlog b2 where bidder = 'user0' and not exists (select distinct bidder, auction_id " +
+				"from bidlog b3 where b1.bidder = b3.bidder and b2.auction_id = b3.auction_id)) and bidder <> 'user0' and (" +
+				"select count(auction_id) from bidlog where bidder = 'user0') > 0) friends join bidlog bids on friends.bidder = bids.bidder " +
+				"join product p on bids.auction_id = p.auction_id where bids.auction_id not in (select distinct auction_id from bidlog " +
+				"where bidder = 'user0') and p.status = 'underauction') t1 join product on t1.auction_id = product.auction_id " +
+				"group by product.auction_id, product.name, product.description, product.amount order by count(bidder) desc");
 			
 			if(suggestions != null) {
 				// print table heading
