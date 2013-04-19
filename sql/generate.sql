@@ -417,7 +417,7 @@ update sys_time set my_time = to_date('12-dec-2012/09:00:00pm', 'dd-mm-yyyy/hh:m
 ---- (1) for all  products
 select name, status, amount as highest_bid, login from (
   select p.name, p.status, p.amount, b.bidder as login
-  from product p join bidlog b on p.auction_id = b.auction_id and p.amount = b.amount
+  from product p left join bidlog b on p.auction_id = b.auction_id and p.amount = b.amount
   where p.status = 'underauction'
   union
   select name, status, amount, buyer as login

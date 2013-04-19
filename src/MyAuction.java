@@ -1062,7 +1062,7 @@ public class MyAuction {
 	public void productStatistics(String customer) {
 		try {
 			String query = "select name, status, amount as highest_bid, login, seller from (" +
-				"select p.name, p.status, p.amount, b.bidder as login, p.seller from product p join bidlog b on p.auction_id = b.auction_id and p.amount = b.amount where p.status = 'underauction' " +
+				"select p.name, p.status, p.amount, b.bidder as login, p.seller from product p left join bidlog b on p.auction_id = b.auction_id and p.amount = b.amount where p.status = 'underauction' " +
 				"union select name, status, amount, buyer as login, seller from product where status = 'sold')";
 			ResultSet result;
 			if (customer.isEmpty()) {
@@ -1079,7 +1079,11 @@ public class MyAuction {
 			int[] widths = {20, 20, 15, 15};
 			System.out.println(createTableHeading(titles, widths));
 			while(result.next()) {
-				System.out.printf("%-20s %-20s %15d %-15s\n", result.getString(1), result.getString(2), result.getInt(3), result.getString(4));
+				String bidder = result.getString(4);
+				if (result.wasNull()) {
+					bidder = ""; // just leave bidder blank if there were no bids
+				}
+				System.out.printf("%-20s %-20s %15d %-15s\n", result.getString(1), result.getString(2), result.getInt(3), bidder);
 			}
 		} catch (SQLException e) {
 			handleSQLException(e);
