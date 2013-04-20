@@ -1,3 +1,7 @@
+//CS1555 Term Project
+//Nicholas Amoscato -- naa46@pitt.edu
+//Ryan Sandhaus -- rjs90@pitt.edu
+
 import java.io.Console;
 import java.io.File;
 import java.io.FileNotFoundException;
