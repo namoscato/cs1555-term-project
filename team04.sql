@@ -542,7 +542,7 @@ CREATE OR REPLACE TRIGGER closeAuctions
 AFTER UPDATE ON sys_time
 BEGIN
   update product
-  set status = 'close'
+  set status = 'closed'
   where status = 'underauction' and (start_date + number_of_days) < (select my_time from sys_time);
 END;
 /
