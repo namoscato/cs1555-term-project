@@ -1,3 +1,4 @@
+import java.io.Console;
 import java.io.File;
 import java.io.FileNotFoundException;
 import oracle.sql.*;
@@ -493,13 +494,10 @@ public class MyAuction {
 	 */
 	public boolean login(int type) {
 		try {
-
-			if(type != 1 && type != 2)
-				System.out.println("You should never ever see this output.") ;
-			
+			Console console = System.console();
 			System.out.println("\nPlease enter your login information.");
 			username = getUserInput("Username");
-			password = getUserInput("Password");
+			password = new String(console.readPassword("Password: "));
 
 			//checking to make sure the usn/pwd match something in the database
 			ResultSet resultSet;
