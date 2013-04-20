@@ -339,7 +339,9 @@ end ;
 ---- (1) sell the product
 select count(bidsn) as bids from bidlog where auction_id = 1;
 -- if bids > 0:
+
 -- save this result in a Java variable
+-- if bids == 1, rn = 1 not 2
 select amount from (
   select amount, rownum as rn from (
     select amount
@@ -347,7 +349,8 @@ select amount from (
     where auction_id = 1
     order by bid_time desc
   ) where rownum <= 2
-) where rn = 2; -- if bids == 1, rn = 1 not 2
+) where rn = 2;
+
 -- assume second highest bid amount = 100
 update product
 set status = 'sold', buyer = (
