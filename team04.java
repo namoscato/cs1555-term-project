@@ -10,14 +10,14 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class MyAuction {
+public class team04 {
 	private Connection connection;
 	private String username, password;
 	private Scanner input;
 	
 	private static final String HR = "--------------------------------------";
 	
-	public MyAuction() {
+	public team04() {
 		try {
 			// get username and password
 			Scanner scanner = new Scanner(new File("db.config"));
@@ -1159,6 +1159,6 @@ public class MyAuction {
     }
 
 	public static void main(String args[]) {
-		MyAuction test = new MyAuction();
+		team04 test = new team04();
 	}
 }

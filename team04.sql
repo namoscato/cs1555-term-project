@@ -312,8 +312,9 @@ end;
 -- select validate_bid(7,55) from dual;
 
 -- if validate_bid():
--- record in the database the new bid where <amount> is an amount
-insert into bidlog values(1, 1, 'username', (select my_time from sys_time), <amount>);
+-- record in the database the new bid
+-- assume the new bid amount = 100
+insert into bidlog values(1, 1, 'username', (select my_time from sys_time), 100);
 
 /*
 This procudure is going to be used in the Java implementation. Currently we have our
